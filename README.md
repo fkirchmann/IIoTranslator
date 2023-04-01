@@ -1,7 +1,7 @@
 # IIoTranslator
 ![(Screenshot)](docs/img/uaexpert.gif)
 
-Enabling Industrial Connectivity: IIoTranslator establishes connections with industrial equipment and delivers their data through an OPC UA server. It achieves this by implementing a number of proprietary, device-specific protocols. Downtime is handled gracefully by automatically reconnecting as soon as a device comes back online.
+IIoTranslator establishes connections with industrial equipment and makes their data available by hosting an OPC UA server. It achieves this by implementing a number of proprietary, device-specific protocols. Downtime is handled gracefully by automatically reconnecting as soon as a device comes back online.
 
 ## Available Device Drivers
 - [WeissTechnik LabEvent](docs/drivers/WeissLabEvent.md): supports WeissTechnik LabEvent ovens.
@@ -21,7 +21,8 @@ Note: a device driver being mentioned in this project does not imply any sort of
     - Linux: ``DOCKER_BUILDKIT=1 docker build -t iiotranslator .``
     - Docker Desktop (e.g., Windows): ``docker build -t iiotranslator .``
 3. Run: ``docker run -p 4840:4840 -v ${PWD}:/config iiotranslator`` (works on Linux & Windows PowerShell)
-4. Edit the application.properties file to change settings and add devices, then restart the application.
+4. Use [UaExpert](https://www.unified-automation.com/products/development-tools/uaexpert.html) or any other OPC UA client to connect to the server at `opc.tcp://localhost:4840/`
+5Edit the application.properties file to change settings and add devices, then restart the application.
 
 Note: it is important that a directory containing the `application.properties` file is mounted to `/config/` inside the container. This file contains the configuration for the application, including the devices to connect to. If it's missing or contains zero devices, the application won't start.
 
