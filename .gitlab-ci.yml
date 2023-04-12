@@ -7,10 +7,10 @@ variables:
   DOCKER_DRIVER: overlay2
 
 build:
-  image: docker:latest
+  image: docker:23
   stage: build
   services:
-    - docker:dind
+    - docker:23-dind
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   # Default branch leaves tag empty (= latest tag)
@@ -32,6 +32,7 @@ build:
         - Dockerfile
 
 deploy-production:
+  image: docker:23
   stage: deploy-production
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
