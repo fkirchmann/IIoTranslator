@@ -194,7 +194,7 @@ public class KeyenceDriverCodes {
         DEFLECTOR_VOLTAGE_LEAK_ERROR(58, ErrorLevel.ABNORMAL, "Deflector Voltage Leak Error (5 Minutes Elapsed)"),
         HEAD_COVER_OPEN_ERROR_2(59, ErrorLevel.ABNORMAL, "Head Cover Open Error 2"),
         INK_PATH_UNIT_LIFESPAN_ERROR(60, ErrorLevel.ABNORMAL, "Ink Path Unit Lifespan Error"),
-        MAINTENANCE_NOT_COMPLETE_ERROR(64, ErrorLevel.ABNORMAL, "Maitenance Not Complete Error"),
+        MAINTENANCE_NOT_COMPLETE_ERROR(64, ErrorLevel.ABNORMAL, "Maintenance Not Complete Error"),
         MAIN_TANK_SUPPLY_ABNORMAL_ERROR(66, ErrorLevel.ABNORMAL, "Main Tank Supply Abnormal Error"),
         DRAIN_ERROR(67, ErrorLevel.ABNORMAL, "Drain Error"),
         PRESSURE_ERROR(68, ErrorLevel.ABNORMAL, "Pressure Error"),
