@@ -18,9 +18,13 @@ Note: a device driver being mentioned in this project does not imply any sort of
 ### Quick Start with Docker (recommended)
 1. Download the main branch and `cd` to it.
 2. Build:
-    - Linux: ``DOCKER_BUILDKIT=1 docker build -t iiotranslator .``
-    - Docker Desktop (e.g., Windows): ``docker build -t iiotranslator .``
-3. Run: ``docker run -p 4840:4840 -v ${PWD}:/config iiotranslator`` (works on Linux & Windows PowerShell)
+```
+docker buildx build . -t iiotranslator:latest
+```
+3. Run (works on Linux & Windows PowerShell): 
+```
+docker run -p 4840:4840 -v ${PWD}:/config iiotranslator:latest
+```
 4. Use [UaExpert](https://www.unified-automation.com/products/development-tools/uaexpert.html) or any other OPC UA client to connect to the server at `opc.tcp://localhost:4840/`
 5. Edit the application.properties file to change settings and add devices, then restart the application.
 
@@ -29,7 +33,10 @@ Note: it is important that a directory containing the `application.properties` f
 ### Quick Start with Java
 1. Install Java 17 (or newer) and Maven 3.
 2. Download the main branch and `cd` to it.
-3. Run the application with `mvn spring-boot:run`
+3. Run the application:
+```
+mvn spring-boot:run
+```
 4. Use [UaExpert](https://www.unified-automation.com/products/development-tools/uaexpert.html) or any other OPC UA client to connect to the server at `opc.tcp://localhost:4840/`
 5. Edit the application.properties file to change settings and add devices, then restart the application.
 
