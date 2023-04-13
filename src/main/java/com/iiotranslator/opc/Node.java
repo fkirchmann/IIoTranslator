@@ -5,16 +5,19 @@
 
 package com.iiotranslator.opc;
 
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaNode;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 @Getter
 @EqualsAndHashCode(of="path")
-public class Node {
-    Node(String name, Node parent) {
+public abstract class Node {
+    Node(OpcNamespace opcNamespace, @NonNull String name, @NonNull Node parent) {
         if(name.contains("/")) {
             throw new IllegalArgumentException("Node name cannot contain '/'");
         }
@@ -22,19 +25,33 @@ public class Node {
         this.parent = parent;
         this.path = Stream.concat(parent.getPath().stream(), Stream.of(name)).toList();
         this.pathString = (parent.pathString.isEmpty() ? "" : (parent.getPathString() + "/")) + name;
+        this.opcNamespace = opcNamespace;
+        this.uaNode = createUaNode();
+        this.parent.registerChild(this.uaNode);
     }
 
-    Node() {
+    Node(OpcNamespace opcNamespace) {
         this.name = "";
         this.parent = null;
         this.path = List.of();
         this.pathString = "";
+        this.opcNamespace = opcNamespace;
+        this.uaNode = createUaNode();
     }
 
     private final Node parent;
     private final String name;
     private final List<String> path;
     private final String pathString;
+
+    @Getter(AccessLevel.PACKAGE)
+    private final OpcNamespace opcNamespace;
+    @Getter(AccessLevel.PACKAGE)
+    private final UaNode uaNode;
+
+    protected abstract UaNode createUaNode();
+
+    protected abstract void registerChild(UaNode child);
 
     public Node getParent() {
         return parent;

@@ -6,6 +6,8 @@
 package com.iiotranslator.opc;
 
 import lombok.Synchronized;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaFolderNode;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaNode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 
 import java.util.ArrayList;
@@ -15,12 +17,22 @@ import java.util.List;
 public class FolderNode extends Node {
     private final List<Node> children = Collections.synchronizedList(new ArrayList<>());
 
-    private FolderNode(String name, FolderNode parent) {
-        super(name, parent);
+    private FolderNode(OpcNamespace opcNamespace, String name, FolderNode parent) {
+        super(opcNamespace, name, parent);
     }
 
-    FolderNode() {
-        super();
+    FolderNode(OpcNamespace opcNamespace) {
+        super(opcNamespace);
+    }
+
+    @Override
+    protected UaNode createUaNode() {
+        return getOpcNamespace().createFolderNode(this);
+    }
+
+    @Override
+    protected void registerChild(UaNode child) {
+        getOpcNamespace().registerChildNode(child, (UaFolderNode) getUaNode());
     }
 
     public List<Node> getChildren() {
@@ -44,21 +56,21 @@ public class FolderNode extends Node {
 
     @Synchronized("children")
     public VariableNode addVariableReadOnly(String name, NodeId type) {
-        var child = new VariableNode(name, this, type);
+        var child = new VariableNode(getOpcNamespace(), name, this, type);
         addChild(child);
         return child;
     }
 
     @Synchronized("children")
     public WritableVariableNode addVariableReadWrite(String name, NodeId type) {
-        var child = new WritableVariableNode(name, this, type);
+        var child = new WritableVariableNode(getOpcNamespace(), name, this, type);
         addChild(child);
         return child;
     }
 
     @Synchronized("children")
     public FolderNode addFolder(String name) {
-        var childFolder = new FolderNode(name, this);
+        var childFolder = new FolderNode(getOpcNamespace(), name, this);
         addChild(childFolder);
         return childFolder;
     }

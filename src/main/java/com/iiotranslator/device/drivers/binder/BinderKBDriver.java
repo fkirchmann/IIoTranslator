@@ -5,7 +5,7 @@
 
 package com.iiotranslator.device.drivers.binder;
 
-import com.iiotranslator.device.NonBatchingDeviceDriver;
+import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
@@ -28,19 +28,18 @@ import java.util.Map;
 import java.util.Set;
 
 @Slf4j
-public class BinderKBDriver extends NonBatchingDeviceDriver {
-    private final int timeout;
-
-    public BinderKBDriver(Device device, FolderNode deviceFolder) {
-        super(device, deviceFolder);
-        this.timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "2000"));
-    }
+public class BinderKBDriver implements NonBatchingDeviceDriver {
+    private int timeout;
+    private Device device;
 
     private final Map<VariableNode, String> variableMap = new HashMap<>();
     private final Set<VariableNode> convertKelvinToCelsius = new HashSet<>();
 
     @Override
-    protected void createNodes(Device device, FolderNode folder) {
+    public void initialize(Device device, FolderNode folder) {
+        this.device = device;
+        this.timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "2000"));
+
         variableMap.put(folder.addVariableReadOnly("Communication Status", Identifiers.String), "10010010");
         variableMap.put(folder.addVariableReadOnly("Fan Speed", Identifiers.Double), "112000E1");
         var temperatureSetpoint = folder.addVariableReadOnly("Temperature Setpoint", Identifiers.Double);
@@ -55,7 +54,7 @@ public class BinderKBDriver extends NonBatchingDeviceDriver {
     }
 
     @Override
-    protected DataValue readImpl(VariableNode variable) {
+    public DataValue readImpl(VariableNode variable) {
         if(!ensureConnected()) {
             return new DataValue(StatusCodes.Bad_NoCommunication);
         }
@@ -72,7 +71,7 @@ public class BinderKBDriver extends NonBatchingDeviceDriver {
             }
             return DriverUtil.convertValue(variable, response);
         } catch (IOException | NumberFormatException e) {
-            log.trace("[{}]: Error reading from device", getDevice().getName(), e);
+            log.trace("[{}]: Error reading from device", device.getName(), e);
             disconnect();
             return new DataValue(StatusCodes.Bad_CommunicationError);
         }
@@ -86,7 +85,7 @@ public class BinderKBDriver extends NonBatchingDeviceDriver {
         try {
             socket.close();
         } catch (IOException e) {
-            log.trace("[{}]: Error closing socket", getDevice().getName(), e);
+            log.trace("[{}]: Error closing socket", device.getName(), e);
         }
         socket = null;
         // As this method usually only gets called when an error occurs, wait a bit before trying to reconnect.
@@ -107,13 +106,13 @@ public class BinderKBDriver extends NonBatchingDeviceDriver {
         try {
             socket = new Socket();
             socket.setSoTimeout(timeout);
-            socket.connect(new InetSocketAddress(getDevice().getOption("hostname"),
-                    Integer.parseInt(getDevice().getOptionOrDefault("port", "9000"))), timeout);
+            socket.connect(new InetSocketAddress(device.getOption("hostname"),
+                    Integer.parseInt(device.getOptionOrDefault("port", "9000"))), timeout);
             writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
             return true;
         } catch (IOException e) {
-            log.trace("[{}]: Error connecting to device", getDevice().getName(), e);
+            log.trace("[{}]: Error connecting to device", device.getName(), e);
             // cooldown
             disconnect();
             return false;

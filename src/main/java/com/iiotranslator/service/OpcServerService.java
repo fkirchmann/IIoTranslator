@@ -5,7 +5,6 @@
 
 package com.iiotranslator.service;
 
-import com.iiotranslator.device.DevicesService;
 import com.iiotranslator.opc.OpcServer;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -18,7 +17,7 @@ import java.util.Set;
 
 @Service
 @Slf4j
-public class OpcDeviceServerService {
+public class OpcServerService {
     @Value("${iiot.opcua.bindAddress}")
     private String bindAddress;
     @Value("${iiot.opcua.bindPortTcp}")
@@ -33,19 +32,13 @@ public class OpcDeviceServerService {
     @Getter
     private OpcServer server;
 
-    private final DevicesService devicesService;
-
-    public OpcDeviceServerService(DevicesService devicesService) {
-        this.devicesService = devicesService;
-    }
-
     @PostConstruct
     @SneakyThrows
     private void initialize() {
-        this.server = new OpcServer(hostnames, bindAddress, bindPortTcp, username, password,
-                devicesService.getRootNode(), devicesService);
+        log.info("Starting OPC UA server");
+        this.server = new OpcServer(hostnames, bindAddress, bindPortTcp, username, password);
         server.startup().get();
-
-        log.debug("OPC UA server started");
+        server.getRootNode().get();
+        log.info("OPC UA server started");
     }
 }

@@ -8,9 +8,11 @@ package com.iiotranslator.device;
 import com.iiotranslator.device.drivers.KnownDeviceDrivers;
 import com.iiotranslator.opc.*;
 import com.iiotranslator.service.DevicesConfiguration;
+import com.iiotranslator.service.OpcServerService;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Manages Device Drivers and distributes requests to them.
@@ -26,23 +29,32 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @RequiredArgsConstructor
 public class DevicesService implements VariableNodeAccessor {
+    @Getter
+    private final OpcServerService opcServerService;
+
     private final DevicesConfiguration config;
 
-    @Getter
-    private final RootNode rootNode = new RootNode();
+    private final Map<FolderNode, DeviceDriverThread> devices = new ConcurrentHashMap<>();
 
-    private final Map<FolderNode, DeviceDriver> devices = new ConcurrentHashMap<>();
-
+    @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @PostConstruct
     private void initialize() {
+        var rootNode = opcServerService.getServer().getRootNode().get();
+        log.info("Starting device driver threads");
         config.getDevices().parallelStream().forEach(device -> {
             log.info("[{}]: Initializing device", device.getName());
             var deviceFolder = rootNode.addFolder(device.getName());
-            var driver = KnownDeviceDrivers.getDriver(device, deviceFolder);
-            devices.put(deviceFolder, driver);
-            log.info("[{}]: Device initialized", device.getName());
+            try {
+                var driverSupplier = KnownDeviceDrivers.getDriverSupplier(device);
+                var driverThread = new DeviceDriverThread(device, deviceFolder, driverSupplier);
+                devices.put(deviceFolder, driverThread);
+                log.info("[{}]: Device driver thread started", device.getName());
+            } catch (KnownDeviceDrivers.UnknownDriverException e) {
+                log.error("[{}]: Unknown driver {}, device not initialized", device.getName(), device.getDriver());
+            }
         });
-        log.info("All devices initialized");
+        log.info("All device driver threads started");
+        opcServerService.getServer().setVariableNodeAccessor(this);
     }
 
     @Override
@@ -55,7 +67,7 @@ public class DevicesService implements VariableNodeAccessor {
         return getDriver(variable).write(variable, value);
     }
 
-    private DeviceDriver getDriver(Node node) {
+    private DeviceDriverThread getDriver(Node node) {
         for(var entry : devices.entrySet()) {
             if(entry.getKey().isParentOf(node)) {
                 return entry.getValue();

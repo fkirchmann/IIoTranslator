@@ -5,8 +5,9 @@
 
 package com.iiotranslator.device.drivers.keyence;
 
-import com.iiotranslator.device.DeviceDriver;
 import com.iiotranslator.device.DeviceRequest;
+import com.iiotranslator.device.DeviceRequestCompletionListener;
+import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.service.Device;
@@ -33,20 +34,20 @@ import java.util.stream.Collectors;
  * TODO: This driver is incomplete and untested.
  */
 @Slf4j
-public class KeyenceDriver extends DeviceDriver {
-    private final int timeout;
-
-    public KeyenceDriver(Device device, FolderNode deviceFolder) {
-        super(device, deviceFolder);
-        this.timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "2000"));
-    }
+public class KeyenceDriver implements DeviceDriver {
+    private Device device;
+    private int timeout;
 
     // Read-only variables
     private VariableNode systemStatusCode, SystemStatusNames, errorLevel, errorCodes, errorNames, time;
     // Read-write variables
     private VariableNode lineSpeed;
+
     @Override
-    protected void createNodes(Device device, FolderNode folder) {
+    public void initialize(Device device, FolderNode folder) {
+        this.device = device;
+        this.timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "2000"));
+
         var system = folder.addFolder("System");
         systemStatusCode = system.addVariableReadOnly("System Status Code", Identifiers.Int32);
         SystemStatusNames = system.addVariableReadOnly("System Status Names", Identifiers.String);
@@ -59,13 +60,13 @@ public class KeyenceDriver extends DeviceDriver {
     }
 
     @Override
-    protected void process(List<DeviceRequest> requestQueue) {
+    public void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener listener) {
         if(!ensureConnected()) {
             for (DeviceRequest request : requestQueue) {
                 if(request instanceof DeviceRequest.ReadRequest readRequest) {
-                    completeReadRequest(readRequest, new DataValue(StatusCodes.Bad_NoCommunication));
+                    listener.completeReadRequest(readRequest, new DataValue(StatusCodes.Bad_NoCommunication));
                 } else if(request instanceof DeviceRequest.WriteRequest writeRequest) {
-                    completeWriteRequest(writeRequest, new IOException("Not connected"));
+                    listener.completeWriteRequest(writeRequest, new IOException("Not connected"));
                 }
             }
             return;
@@ -99,16 +100,19 @@ public class KeyenceDriver extends DeviceDriver {
                 for(DeviceRequest request : errorVariablesReadRequests) {
                     if(request instanceof DeviceRequest.ReadRequest readRequest) {
                         if(readRequest.getVariable() == errorCodes) {
-                            completeReadRequest(readRequest, new DataValue(new Variant(errorCodesBuilder.toString())));
+                            listener.completeReadRequest(readRequest,
+                                    new DataValue(new Variant(errorCodesBuilder.toString())));
                         } else if(readRequest.getVariable() == errorNames) {
-                            completeReadRequest(readRequest, new DataValue(new Variant(errorNamesBuilder.toString())));
+                            listener.completeReadRequest(readRequest,
+                                    new DataValue(new Variant(errorNamesBuilder.toString())));
                         } else if(readRequest.getVariable() == errorLevel) {
-                            completeReadRequest(readRequest, new DataValue(new Variant(highestErrorLevel.name())));
+                            listener.completeReadRequest(readRequest,
+                                    new DataValue(new Variant(highestErrorLevel.name())));
                         }
                     }
                 }
             } catch (IOException e) {
-                log.warn("[{}]: Error reading error codes", getDevice().getName(), e);
+                log.warn("[{}]: Error reading error codes", device.getName(), e);
             }
         }
     }
@@ -143,7 +147,7 @@ public class KeyenceDriver extends DeviceDriver {
         try {
             socket.close();
         } catch (IOException e) {
-            log.trace("[{}]: Error closing socket", getDevice().getName(), e);
+            log.trace("[{}]: Error closing socket", device.getName(), e);
         }
         socket = null;
         // As this method usually only gets called when an error occurs, wait a bit before trying to reconnect.
@@ -164,13 +168,13 @@ public class KeyenceDriver extends DeviceDriver {
         try {
             socket = new Socket();
             socket.setSoTimeout(timeout);
-            socket.connect(new InetSocketAddress(getDevice().getOption("hostname"),
-                    Integer.parseInt(getDevice().getOptionOrDefault("port", "9004"))), timeout);
+            socket.connect(new InetSocketAddress(device.getOption("hostname"),
+                    Integer.parseInt(device.getOptionOrDefault("port", "9004"))), timeout);
             writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.US_ASCII);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
             return true;
         } catch (IOException e) {
-            log.trace("[{}]: Error connecting to device", getDevice().getName(), e);
+            log.trace("[{}]: Error connecting to device", device.getName(), e);
             // cooldown
             disconnect();
             return false;

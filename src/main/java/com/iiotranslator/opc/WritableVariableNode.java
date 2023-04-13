@@ -8,8 +8,8 @@ package com.iiotranslator.opc;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 
 public class WritableVariableNode extends VariableNode {
-    public WritableVariableNode(String name, Node parent, NodeId type) {
-        super(name, parent, type);
+    WritableVariableNode(OpcNamespace opcNamespace, String name, Node parent, NodeId type) {
+        super(opcNamespace, name, parent, type);
     }
 
     @Override

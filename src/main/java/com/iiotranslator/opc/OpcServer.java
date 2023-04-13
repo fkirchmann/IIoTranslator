@@ -5,12 +5,17 @@
 
 package com.iiotranslator.opc;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import org.eclipse.milo.opcua.sdk.server.OpcUaServer;
 import org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfig;
 import org.eclipse.milo.opcua.sdk.server.identity.UsernameIdentityValidator;
+import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.security.SecurityPolicy;
 import org.eclipse.milo.opcua.stack.core.transport.TransportProfile;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DateTime;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.MessageSecurityMode;
@@ -36,21 +41,41 @@ public class OpcServer {
     private static final UserTokenPolicy USER_TOKEN_POLICY_USERNAME_UNENCRYPTED = new UserTokenPolicy(
             "username", UserTokenType.UserName, null, null, null);
 
-    private final OpcUaServer server;
+    @Getter(AccessLevel.PACKAGE)
+    private final OpcUaServer uaServer;
     private final OpcNamespace opcNamespace;
 
     private final Set<String> hostnames;
     private final String bindAddress;
     private final int tcpBindPort;
-    private final VariableNodeAccessor variableNodeAccessor;
+
+    @Getter
+    @Setter
+    @NonNull
+    private VariableNodeAccessor variableNodeAccessor = new VariableNodeAccessor() {
+        /*
+         * This is a dummy implementation
+         */
+        @Override
+        public CompletableFuture<DataValue> read(VariableNode variable) {
+            return CompletableFuture.completedFuture(new DataValue(StatusCodes.Bad_NotSupported));
+        }
+
+        @Override
+        public CompletableFuture<Void> write(WritableVariableNode variable, Object value) {
+            var future = new CompletableFuture<Void>();
+            future.completeExceptionally(new UnsupportedOperationException());
+            return future;
+        }
+    };
+
+    private final CompletableFuture<RootNode> rootNodeCompletableFuture = new CompletableFuture<>();
 
     public OpcServer(@NonNull Set<String> hostnames, @NonNull String bindAddress, int tcpBindPort,
-                     @NonNull String username, @NonNull String password, @NonNull RootNode rootNode,
-                     @NonNull VariableNodeAccessor variableNodeAccessor) {
+                     @NonNull String username, @NonNull String password) {
         this.hostnames = hostnames;
         this.bindAddress = bindAddress;
         this.tcpBindPort = tcpBindPort;
-        this.variableNodeAccessor = variableNodeAccessor;
 
         UsernameIdentityValidator identityValidator = new UsernameIdentityValidator(false,
             authChallenge -> authChallenge.getUsername().equals(username)
@@ -74,9 +99,9 @@ public class OpcServer {
             .setProductUri(PRODUCT_URI)
             .build();
 
-        server = new OpcUaServer(serverConfig);
+        uaServer = new OpcUaServer(serverConfig);
 
-        opcNamespace = new OpcNamespace(server, rootNode, variableNodeAccessor);
+        opcNamespace = new OpcNamespace(this, rootNodeCompletableFuture);
         opcNamespace.startup();
     }
 
@@ -131,12 +156,16 @@ public class OpcServer {
     }
 
     public CompletableFuture<OpcUaServer> startup() {
-        return server.startup();
+        return uaServer.startup();
     }
 
     public CompletableFuture<OpcUaServer> shutdown() {
         opcNamespace.shutdown();
 
-        return server.shutdown();
+        return uaServer.shutdown();
+    }
+
+    public CompletableFuture<RootNode> getRootNode() {
+        return rootNodeCompletableFuture;
     }
 }

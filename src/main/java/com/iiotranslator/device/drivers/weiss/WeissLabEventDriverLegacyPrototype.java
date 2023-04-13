@@ -7,8 +7,9 @@ package com.iiotranslator.device.drivers.weiss;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.iiotranslator.device.DeviceDriver;
 import com.iiotranslator.device.DeviceRequest;
+import com.iiotranslator.device.DeviceRequestCompletionListener;
+import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
@@ -39,13 +40,21 @@ import java.util.regex.Pattern;
  * the Weiss LabEvent ovens. It is not working, and is not used in production.
  */
 @Slf4j
-public class WeissLabEventDriverLegacyPrototype extends DeviceDriver {
-
-    private final String hostname, user, password;
-    private final int port, timeout;
+public class WeissLabEventDriverLegacyPrototype implements DeviceDriver {
+    private Device device;
+    private String hostname, user, password;
+    private int port, timeout;
 
     public WeissLabEventDriverLegacyPrototype(Device device, FolderNode deviceFolder) {
-        super(device, deviceFolder);
+
+    }
+
+    private final Map<String, VariableNode> variables = new HashMap<>();
+    private final Map<VariableNode, DataValue> values = new HashMap<>();
+
+    @Override
+    public void initialize(Device device, FolderNode folder) {
+        this.device = device;
         hostname = device.getOption("hostname");
         user = device.getOptionOrDefault("user", "admin");
         password = device.getOptionOrDefault("password", "admin");
@@ -54,13 +63,7 @@ public class WeissLabEventDriverLegacyPrototype extends DeviceDriver {
         if(user.contains(",") || password.contains(",")) {
             throw new IllegalArgumentException("User or password must not contain a comma (,)");
         }
-    }
 
-    private final Map<String, VariableNode> variables = new HashMap<>();
-    private final Map<VariableNode, DataValue> values = new HashMap<>();
-
-    @Override
-    protected void createNodes(Device device, FolderNode folder) {
         addVariableNode(folder.addVariableReadOnly("ManLock", Identifiers.String));
         addVariableNode(folder.addVariableReadOnly("CHB.UserLock", Identifiers.String));
         addVariableNode(folder.addVariableReadOnly("PrgStartStop", Identifiers.String));
@@ -109,14 +112,15 @@ public class WeissLabEventDriverLegacyPrototype extends DeviceDriver {
 
     @Override
     @SneakyThrows(InterruptedException.class)
-    protected void process(List<DeviceRequest> requestQueue) {
-        connectAndProcess();
+    public void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener listener) {
+        // TODO process the requestQueue
+        connectAndProcess(listener);
         Thread.sleep(timeout);
     }
 
     private Sinks.Many<String> sendSink;
 
-    private void connectAndProcess() {
+    private void connectAndProcess(DeviceRequestCompletionListener listener) {
         sendSink = Sinks.many().multicast().onBackpressureBuffer();
         send("{\"cmd\":\"ver\",\"data\":{\"major\":1,\"minor\":1,\"patch\":5}}");
         send("app");
@@ -136,7 +140,7 @@ public class WeissLabEventDriverLegacyPrototype extends DeviceDriver {
                                 return Mono.zip(
                                         // Take outgoing messages from the sink and send them to the server
                                         sendSink.asFlux().map(message -> {
-                                            log.trace("[{}] Sending: {}", getDevice().getName(), message);
+                                            log.trace("[{}] Sending: {}", device.getName(), message);
                                             return session.textMessage(message);
                                         }).then(),
                                         // Receive messages from the server and handle them
@@ -145,14 +149,14 @@ public class WeissLabEventDriverLegacyPrototype extends DeviceDriver {
                                     .then(session.close());
                             }
                         }).block();
-        log.trace("[{}]: Connection closed", getDevice().getName());
+        log.trace("[{}]: Connection closed", device.getName());
     }
 
     private static final Pattern MESSAGE_VALUE_PATTERN = Pattern.compile("^@val:(.+):(.*)$");
     private final Gson gson = new Gson();
 
     private void handleMessage(String message) {
-        log.trace("[{}]: Received message: {}", getDevice().getName(), message);
+        log.trace("[{}]: Received message: {}", device.getName(), message);
         Matcher valMatcher = MESSAGE_VALUE_PATTERN.matcher(message);
         if(valMatcher.matches()) {
             var variable = variables.get(valMatcher.group(1));
@@ -171,7 +175,7 @@ public class WeissLabEventDriverLegacyPrototype extends DeviceDriver {
                 }
             }
         } catch (JsonSyntaxException | NullPointerException ignored) {
-            log.trace("[{}]: Ignoring message: \"{}\"", getDevice().getName(), message);
+            log.trace("[{}]: Ignoring message: \"{}\"", device.getName(), message);
         }
     }
 

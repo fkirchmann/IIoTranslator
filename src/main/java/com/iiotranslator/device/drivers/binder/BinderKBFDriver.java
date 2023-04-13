@@ -5,8 +5,9 @@
 
 package com.iiotranslator.device.drivers.binder;
 
-import com.iiotranslator.device.DeviceDriver;
 import com.iiotranslator.device.DeviceRequest;
+import com.iiotranslator.device.DeviceRequestCompletionListener;
+import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
@@ -34,14 +35,18 @@ import java.util.regex.Pattern;
 import java.util.zip.Inflater;
 
 @Slf4j
-public class BinderKBFDriver extends DeviceDriver {
-    private final int timeout;
-    private final WebClient client;
+public class BinderKBFDriver implements DeviceDriver {
+    private Device device;
+    private int timeout;
+    private WebClient client;
+    private String uriPrefix;
+    private Map<String, VariableNode> variableNodes;
 
-    private final String uriPrefix;
+    private final Map<VariableNode, DataValue> variableValues = new HashMap<>();
 
-    public BinderKBFDriver(Device device, FolderNode deviceFolder) {
-        super(device, deviceFolder);
+    @Override
+    public void initialize(Device device, FolderNode deviceFolderNode) {
+        this.device = device;
         String hostname = device.getOption("hostname");
         timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "2000"));
         uriPrefix = "http://" + hostname + "/UE/ZIP/";
@@ -54,14 +59,7 @@ public class BinderKBFDriver extends DeviceDriver {
         client = WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
-    }
 
-    private Map<String, VariableNode> variableNodes;
-
-    private final Map<VariableNode, DataValue> variableValues = new HashMap<>();
-
-    @Override
-    protected void createNodes(Device device, FolderNode deviceFolderNode) {
         var variableNodes = new HashMap<String, VariableNode>();
         //variableNodes.put("2.175.0.5.0", deviceFolderNode.addVariableReadOnly("System Time", Identifiers.String)); // Example: "15:32:41  10.01.2023"
         variableNodes.put("2.416.1.0.0", deviceFolderNode.addVariableReadOnly("Temperature", Identifiers.Double));
@@ -73,7 +71,7 @@ public class BinderKBFDriver extends DeviceDriver {
     }
 
     @Override
-    protected void process(List<DeviceRequest> requestQueue) {
+    public void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener listener) {
         variableValues.clear();
         try {
             var input = client.get()
@@ -87,7 +85,7 @@ public class BinderKBFDriver extends DeviceDriver {
             int resultLength = decompresser.inflate(result);
             decompresser.end();
             String output = new String(result, 0, resultLength, StandardCharsets.UTF_8);
-            log.trace("[{}]: Response: {}", getDevice().getName(), output);
+            log.trace("[{}]: Response: {}", device.getName(), output);
             output = output.replace("<Wert>", "").replace("</Wert>", "");
             for(String keyValue : output.split(Pattern.quote("//"))) {
                 try {
@@ -96,7 +94,7 @@ public class BinderKBFDriver extends DeviceDriver {
                         String key = keyValuePair[0];
                         String value = keyValuePair[1];
                         VariableNode variableNode = variableNodes.get(key);
-                        log.trace("[{}]: {} = {}", getDevice().getName(), key, value);
+                        log.trace("[{}]: {} = {}", device.getName(), key, value);
                         if (variableNode != null) {
                             if(value.equals("-----")) {
                                 variableValues.put(variableNode, new DataValue(StatusCode.GOOD));
@@ -104,20 +102,21 @@ public class BinderKBFDriver extends DeviceDriver {
                                 variableValues.put(variableNode, DriverUtil.convertValue(variableNode, value));
                             }
                         } else {
-                            log.warn("[{}]: Unknown variable: {}", getDevice().getName(), key);
+                            log.warn("[{}]: Unknown variable: {}", device.getName(), key);
                         }
                     }
                 } catch (Exception e) {
-                    log.trace("[{}]: Error parsing response: {}", getDevice().getName(), keyValue, e);
+                    log.trace("[{}]: Error parsing response: {}", device.getName(), keyValue, e);
                 }
             }
         } catch (Exception e) {
-            log.trace("[{}]: Error reading from device", getDevice().getName(), e);
+            log.trace("[{}]: Error reading from device", device.getName(), e);
         } finally {
             for (DeviceRequest request : requestQueue) {
                 var readRequest = (DeviceRequest.ReadRequest) request;
                 var variable = readRequest.getVariable();
-                completeReadRequest(readRequest, variableValues.getOrDefault(variable, new DataValue(StatusCode.BAD)));
+                listener.completeReadRequest(readRequest,
+                        variableValues.getOrDefault(variable, new DataValue(StatusCode.BAD)));
             }
         }
     }

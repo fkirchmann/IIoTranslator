@@ -5,7 +5,20 @@
 
 package com.iiotranslator.opc;
 
+import org.eclipse.milo.opcua.sdk.server.nodes.UaNode;
+
 public class RootNode extends FolderNode {
-    public RootNode() {
+    public RootNode(OpcNamespace opcNamespace) {
+        super(opcNamespace);
+    }
+
+    @Override
+    protected UaNode createUaNode() {
+        return null;
+    }
+
+    @Override
+    protected void registerChild(UaNode child) {
+        getOpcNamespace().registerRootChildNode(child);
     }
 }

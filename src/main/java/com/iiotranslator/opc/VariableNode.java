@@ -6,18 +6,29 @@
 package com.iiotranslator.opc;
 
 import lombok.Getter;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaNode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 
 public class VariableNode extends Node {
     @Getter
     private final NodeId dataType;
 
-    VariableNode(String name, Node parent, NodeId dataType) {
-        super(name, parent);
+    VariableNode(OpcNamespace opcNamespace, String name, Node parent, NodeId dataType) {
+        super(opcNamespace, name, parent);
         this.dataType = dataType;
     }
 
     public boolean isWritable() {
         return false;
+    }
+
+    @Override
+    protected UaNode createUaNode() {
+        return getOpcNamespace().createVariableNode(this);
+    }
+
+    @Override
+    protected void registerChild(UaNode child) {
+        throw new UnsupportedOperationException("VariableNode cannot have children");
     }
 }

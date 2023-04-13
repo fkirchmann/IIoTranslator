@@ -7,7 +7,7 @@ package com.iiotranslator.device.drivers.weiss;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.iiotranslator.device.NonBatchingDeviceDriver;
+import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
@@ -37,15 +37,20 @@ import java.util.regex.Pattern;
  * Supports the Weiss LabEvent ovens.
  */
 @Slf4j
-public class WeissLabEventDriver extends NonBatchingDeviceDriver {
+public class WeissLabEventDriver implements NonBatchingDeviceDriver {
+    private Device device;
 
-    private final String hostname, user, password;
-    private final int port, timeout;
+    private String hostname, user, password;
+    private int port, timeout;
 
-    private final URI uri;
+    private URI uri;
 
-    public WeissLabEventDriver(Device device, FolderNode deviceFolder) {
-        super(device, deviceFolder);
+    private final Map<String, VariableNode> variables = new HashMap<>();
+    private final Map<VariableNode, DataValue> values = new ConcurrentHashMap<>();
+
+    @Override
+    public void initialize(Device device, FolderNode folder) {
+        this.device = device;
         hostname = device.getOption("hostname");
         port = Integer.parseInt(device.getOptionOrDefault("port", "443"));
         uri = URI.create("ws://" + hostname + ":" + port);
@@ -55,13 +60,7 @@ public class WeissLabEventDriver extends NonBatchingDeviceDriver {
         if(user.contains(",") || password.contains(",")) {
             throw new IllegalArgumentException("User or password must not contain a comma (,)");
         }
-    }
-
-    private final Map<String, VariableNode> variables = new HashMap<>();
-    private final Map<VariableNode, DataValue> values = new ConcurrentHashMap<>();
-
-    @Override
-    protected void createNodes(Device device, FolderNode folder) {
+        
         addVariableNode(folder.addVariableReadOnly("AV_Temp", Identifiers.String));
         addVariableNode(folder.addVariableReadOnly("CHB.ManRuntime", Identifiers.Int64));
         addVariableNode(folder.addVariableReadOnly("CHB.UserLock", Identifiers.Int64));
@@ -109,7 +108,7 @@ public class WeissLabEventDriver extends NonBatchingDeviceDriver {
     }
 
     @Override
-    protected DataValue readImpl(VariableNode variable) {
+    public DataValue readImpl(VariableNode variable) {
         if(client != null && (client.getReadyState() == ReadyState.OPEN
                 || client.getReadyState() == ReadyState.NOT_YET_CONNECTED)) {
             if(client.isOpen()) {
@@ -158,7 +157,7 @@ public class WeissLabEventDriver extends NonBatchingDeviceDriver {
         @SneakyThrows(IOException.class)
         public void onOpen(ServerHandshake handshakedata) {
             getSocket().setSoTimeout(timeout);
-            log.debug("[{}] Connected", getDevice().getName());
+            log.debug("[{}] Connected", device.getName());
             send("{\"cmd\":\"ver\",\"data\":{\"major\":1,\"minor\":1,\"patch\":5}}");
             send("app");
             send("user:admin,admin,webseason");
@@ -188,7 +187,7 @@ public class WeissLabEventDriver extends NonBatchingDeviceDriver {
 
         @Override
         public void onMessage(String message) {
-            log.trace("[{}]: Receive: {}", getDevice().getName(), message);
+            log.trace("[{}]: Receive: {}", device.getName(), message);
             if(message.startsWith("@item:") || message.startsWith("@user:") || message.startsWith("@app:")) {
                 return; // ignore
             }
@@ -199,7 +198,7 @@ public class WeissLabEventDriver extends NonBatchingDeviceDriver {
                 if(variable != null) {
                     values.put(variable, DriverUtil.convertValue(variable, value));
                 } else {
-                    log.debug("[{}] Ignoring unknown variable: {}", getDevice().getName(), valMatcher.group(1));
+                    log.debug("[{}] Ignoring unknown variable: {}", device.getName(), valMatcher.group(1));
                 }
             } else {
                 // parse message JSON
@@ -211,17 +210,17 @@ public class WeissLabEventDriver extends NonBatchingDeviceDriver {
                             onMessage(command);
                         }
                     } else {
-                        log.debug("[{}] Ignoring unknown JSON message: {}", getDevice().getName(), message);
+                        log.debug("[{}] Ignoring unknown JSON message: {}", device.getName(), message);
                     }
                 } catch (JsonSyntaxException | NullPointerException ignored) {
-                    log.debug("[{}]: Could not parse message, ignoring: \"{}\"", getDevice().getName(), message);
+                    log.debug("[{}]: Could not parse message, ignoring: \"{}\"", device.getName(), message);
                 }
             }
         }
 
         @Override
         public void onError(Exception ex) {
-            log.debug("[{}] A WebSocket error occurred:", getDevice().getName(), ex);
+            log.debug("[{}] A WebSocket error occurred:", device.getName(), ex);
             close();
         }
     }
