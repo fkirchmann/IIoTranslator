@@ -24,9 +24,10 @@ public interface DeviceDriver {
 
     /**
      * This method is called by the driver thread if there are any open read and/or write requests. The driver should
-     * process the requests and complete them by calling the completeWriteRequest or completeReadRequest methods.
+     * process the requests and complete them by calling the provided listener's completeWriteRequest or
+     * completeReadRequest methods.
      *
      * @param requestQueue A list of open DeviceRequest objects for the driver to process.
      */
-    void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener completionListener);
+    void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener listener);
 }

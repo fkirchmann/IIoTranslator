@@ -108,7 +108,7 @@ public class WeissLabEventDriver implements NonBatchingDeviceDriver {
     }
 
     @Override
-    public DataValue readImpl(VariableNode variable) {
+    public DataValue read(VariableNode variable) {
         if(client != null && (client.getReadyState() == ReadyState.OPEN
                 || client.getReadyState() == ReadyState.NOT_YET_CONNECTED)) {
             if(client.isOpen()) {

@@ -54,7 +54,7 @@ public class BinderKBDriver implements NonBatchingDeviceDriver {
     }
 
     @Override
-    public DataValue readImpl(VariableNode variable) {
+    public DataValue read(VariableNode variable) {
         if(!ensureConnected()) {
             return new DataValue(StatusCodes.Bad_NoCommunication);
         }

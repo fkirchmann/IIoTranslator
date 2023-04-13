@@ -26,7 +26,7 @@ public interface NonBatchingDeviceDriver extends DeviceDriver {
      * @param variable The VariableNode to be read.
      * @return A DataValue object containing the result of the read operation.
      */
-    DataValue readImpl(VariableNode variable);
+    DataValue read(VariableNode variable);
 
     /**
      * This method is called when a write request is received. The driver should process the request and write the value
@@ -36,17 +36,17 @@ public interface NonBatchingDeviceDriver extends DeviceDriver {
      * @param variable The VariableNode to be written to.
      * @param value    The value to be written to the variable.
      */
-    default void writeImpl(VariableNode variable, Object value) {
+    default void write(VariableNode variable, Object value) {
         throw new UnsupportedOperationException("Driver does not support writes");
     }
 
-    default void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener completionListener) {
+    default void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener listener) {
         for (DeviceRequest request : requestQueue) {
             if (request instanceof DeviceRequest.ReadRequest readRequest) {
-                completionListener.completeReadRequest(readRequest, readImpl(readRequest.getVariable()));
+                listener.completeReadRequest(readRequest, read(readRequest.getVariable()));
             } else if (request instanceof DeviceRequest.WriteRequest writeRequest) {
-                writeImpl(writeRequest.getVariable(), writeRequest.getValue());
-                completionListener.completeWriteRequest(writeRequest);
+                write(writeRequest.getVariable(), writeRequest.getValue());
+                listener.completeWriteRequest(writeRequest);
             }
         }
     }

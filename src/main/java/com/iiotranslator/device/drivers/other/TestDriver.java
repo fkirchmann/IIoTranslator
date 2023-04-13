@@ -34,7 +34,7 @@ public class TestDriver implements NonBatchingDeviceDriver {
 
     @Override
     @SneakyThrows
-    public DataValue readImpl(VariableNode variable) {
+    public DataValue read(VariableNode variable) {
         Thread.sleep(delay);
         return new DataValue(new Variant(new Random().nextDouble()));
     }
