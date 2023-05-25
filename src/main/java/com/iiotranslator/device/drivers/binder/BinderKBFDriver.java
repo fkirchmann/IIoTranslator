@@ -2,7 +2,6 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers.binder;
 
 import com.iiotranslator.device.DeviceRequest;
@@ -15,15 +14,6 @@ import com.iiotranslator.service.Device;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.milo.opcua.stack.core.Identifiers;
-import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
-import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
-
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -33,6 +23,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.Inflater;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.milo.opcua.stack.core.Identifiers;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
+import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 @Slf4j
 public class BinderKBFDriver implements DeviceDriver {
@@ -53,20 +51,22 @@ public class BinderKBFDriver implements DeviceDriver {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
                 .responseTimeout(Duration.ofMillis(timeout))
-                .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(timeout, TimeUnit.MILLISECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(timeout, TimeUnit.MILLISECONDS)));
+                .doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(timeout, TimeUnit.MILLISECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(timeout, TimeUnit.MILLISECONDS)));
         client = WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
 
         var variableNodes = new HashMap<String, VariableNode>();
-        //variableNodes.put("2.175.0.5.0", deviceFolderNode.addVariableReadOnly("System Time", Identifiers.String)); // Example: "15:32:41  10.01.2023"
+        // variableNodes.put("2.175.0.5.0", deviceFolderNode.addVariableReadOnly("System Time", Identifiers.String)); //
+        // Example: "15:32:41  10.01.2023"
         variableNodes.put("2.416.1.0.0", deviceFolderNode.addVariableReadOnly("Temperature", Identifiers.Double));
-        variableNodes.put("2.227.0.0.0", deviceFolderNode.addVariableReadOnly("Temperature Setpoint", Identifiers.Double));
+        variableNodes.put(
+                "2.227.0.0.0", deviceFolderNode.addVariableReadOnly("Temperature Setpoint", Identifiers.Double));
         variableNodes.put("2.416.3.0.0", deviceFolderNode.addVariableReadOnly("Humidity", Identifiers.Double));
         variableNodes.put("2.413.1.0.0", deviceFolderNode.addVariableReadOnly("Humidity Setpoint", Identifiers.Double));
-        variableNodes.put("2.227.2.0.0", deviceFolderNode.addVariableReadOnly("Fan Speed Setpoint", Identifiers.UInt16));
+        variableNodes.put(
+                "2.227.2.0.0", deviceFolderNode.addVariableReadOnly("Fan Speed Setpoint", Identifiers.UInt16));
         this.variableNodes = variableNodes;
     }
 
@@ -78,7 +78,8 @@ public class BinderKBFDriver implements DeviceDriver {
                     .uri(new URI(uriPrefix + String.join("//", variableNodes.keySet())))
                     .retrieve()
                     .bodyToMono(ByteArrayResource.class)
-                    .block().getByteArray();
+                    .block()
+                    .getByteArray();
             Inflater decompresser = new Inflater();
             decompresser.setInput(input);
             byte[] result = new byte[1024];
@@ -87,7 +88,7 @@ public class BinderKBFDriver implements DeviceDriver {
             String output = new String(result, 0, resultLength, StandardCharsets.UTF_8);
             log.trace("[{}]: Response: {}", device.getName(), output);
             output = output.replace("<Wert>", "").replace("</Wert>", "");
-            for(String keyValue : output.split(Pattern.quote("//"))) {
+            for (String keyValue : output.split(Pattern.quote("//"))) {
                 try {
                     String[] keyValuePair = keyValue.split(Pattern.quote("="));
                     if (keyValuePair.length == 2) {
@@ -96,7 +97,7 @@ public class BinderKBFDriver implements DeviceDriver {
                         VariableNode variableNode = variableNodes.get(key);
                         log.trace("[{}]: {} = {}", device.getName(), key, value);
                         if (variableNode != null) {
-                            if(value.equals("-----")) {
+                            if (value.equals("-----")) {
                                 variableValues.put(variableNode, new DataValue(StatusCode.GOOD));
                             } else {
                                 variableValues.put(variableNode, DriverUtil.convertValue(variableNode, value));
@@ -115,8 +116,8 @@ public class BinderKBFDriver implements DeviceDriver {
             for (DeviceRequest request : requestQueue) {
                 var readRequest = (DeviceRequest.ReadRequest) request;
                 var variable = readRequest.getVariable();
-                listener.completeReadRequest(readRequest,
-                        variableValues.getOrDefault(variable, new DataValue(StatusCode.BAD)));
+                listener.completeReadRequest(
+                        readRequest, variableValues.getOrDefault(variable, new DataValue(StatusCode.BAD)));
             }
         }
     }

@@ -2,7 +2,6 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device;
 
 import com.iiotranslator.device.drivers.DeviceDriver;
@@ -11,13 +10,12 @@ import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.opc.VariableNodeAccessor;
 import com.iiotranslator.opc.WritableVariableNode;
 import com.iiotranslator.service.Device;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
-
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 
 /**
  * Abstract base class for device drivers.
@@ -30,6 +28,7 @@ public class DeviceDriverThread implements VariableNodeAccessor, DeviceRequestCo
 
     @Getter
     private final Device device;
+
     private final FolderNode deviceFolder;
     private final Thread thread;
 
@@ -109,7 +108,9 @@ public class DeviceDriverThread implements VariableNodeAccessor, DeviceRequestCo
     public CompletableFuture<DataValue> read(VariableNode variable) {
         var future = new CompletableFuture<DataValue>();
         synchronized (pendingRequests) {
-            pendingRequests.computeIfAbsent(new DeviceRequest.ReadRequest(variable), k -> new HashSet<>()).add(future);
+            pendingRequests
+                    .computeIfAbsent(new DeviceRequest.ReadRequest(variable), k -> new HashSet<>())
+                    .add(future);
             pendingRequests.notify();
         }
         return future;
@@ -118,7 +119,9 @@ public class DeviceDriverThread implements VariableNodeAccessor, DeviceRequestCo
     public CompletableFuture<Void> write(WritableVariableNode variable, Object value) {
         var future = new CompletableFuture<Void>();
         synchronized (pendingRequests) {
-            pendingRequests.computeIfAbsent(new DeviceRequest.WriteRequest(variable, value), k -> new HashSet<>()).add(future);
+            pendingRequests
+                    .computeIfAbsent(new DeviceRequest.WriteRequest(variable, value), k -> new HashSet<>())
+                    .add(future);
             pendingRequests.notify();
         }
         return future;

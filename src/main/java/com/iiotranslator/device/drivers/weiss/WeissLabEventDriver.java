@@ -2,16 +2,23 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers.weiss;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
+import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.service.Device;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -23,15 +30,6 @@ import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.enums.ReadyState;
 import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.protocols.Protocol;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Supports the Weiss LabEvent ovens.
@@ -57,10 +55,10 @@ public class WeissLabEventDriver implements NonBatchingDeviceDriver {
         user = device.getOptionOrDefault("user", "admin");
         password = device.getOptionOrDefault("password", "admin");
         timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "2000"));
-        if(user.contains(",") || password.contains(",")) {
+        if (user.contains(",") || password.contains(",")) {
             throw new IllegalArgumentException("User or password must not contain a comma (,)");
         }
-        
+
         addVariableNode(folder.addVariableReadOnly("AV_Temp", Identifiers.String));
         addVariableNode(folder.addVariableReadOnly("CHB.ManRuntime", Identifiers.Int64));
         addVariableNode(folder.addVariableReadOnly("CHB.UserLock", Identifiers.Int64));
@@ -109,15 +107,16 @@ public class WeissLabEventDriver implements NonBatchingDeviceDriver {
 
     @Override
     public DataValue read(VariableNode variable) {
-        if(client != null && (client.getReadyState() == ReadyState.OPEN
-                || client.getReadyState() == ReadyState.NOT_YET_CONNECTED)) {
-            if(client.isOpen()) {
+        if (client != null
+                && (client.getReadyState() == ReadyState.OPEN
+                        || client.getReadyState() == ReadyState.NOT_YET_CONNECTED)) {
+            if (client.isOpen()) {
                 return values.getOrDefault(variable, new DataValue(StatusCode.BAD));
             } else {
                 return new DataValue(StatusCode.BAD);
             }
         } else {
-            if(client != null) {
+            if (client != null) {
                 client.close();
             }
             client = new WeissLabEventWebsocketClient();
@@ -148,8 +147,12 @@ public class WeissLabEventDriver implements NonBatchingDeviceDriver {
         private final Gson gson = new Gson();
 
         private WeissLabEventWebsocketClient() {
-            super(WeissLabEventDriver.this.uri, new Draft_6455(Collections.emptyList(),
-                    Collections.singletonList(new Protocol("smarthmi-connect"))), null, timeout);
+            super(
+                    WeissLabEventDriver.this.uri,
+                    new Draft_6455(
+                            Collections.emptyList(), Collections.singletonList(new Protocol("smarthmi-connect"))),
+                    null,
+                    timeout);
             this.setConnectionLostTimeout(timeout);
         }
 
@@ -179,7 +182,7 @@ public class WeissLabEventDriver implements NonBatchingDeviceDriver {
         @SneakyThrows(InterruptedException.class)
         @Override
         public void onClose(int code, String reason, boolean remote) {
-            if(remote) {
+            if (remote) {
                 log.debug("[{}] closed with exit code {}, reason: {}", this, code, reason);
                 closeBlocking();
             }
@@ -188,14 +191,14 @@ public class WeissLabEventDriver implements NonBatchingDeviceDriver {
         @Override
         public void onMessage(String message) {
             log.trace("[{}]: Receive: {}", device.getName(), message);
-            if(message.startsWith("@item:") || message.startsWith("@user:") || message.startsWith("@app:")) {
+            if (message.startsWith("@item:") || message.startsWith("@user:") || message.startsWith("@app:")) {
                 return; // ignore
             }
             Matcher valMatcher = MESSAGE_VALUE_PATTERN.matcher(message);
-            if(valMatcher.matches()) {
+            if (valMatcher.matches()) {
                 var variable = variables.get(valMatcher.group(1));
                 String value = valMatcher.group(2);
-                if(variable != null) {
+                if (variable != null) {
                     values.put(variable, DriverUtil.convertValue(variable, value));
                 } else {
                     log.debug("[{}] Ignoring unknown variable: {}", device.getName(), valMatcher.group(1));
@@ -203,8 +206,7 @@ public class WeissLabEventDriver implements NonBatchingDeviceDriver {
             } else {
                 // parse message JSON
                 try {
-                    @NonNull
-                    var jsonMessage = gson.fromJson(message, Command.class);
+                    @NonNull var jsonMessage = gson.fromJson(message, Command.class);
                     if (jsonMessage.getCmd().equals("multi")) {
                         for (String command : jsonMessage.getData()) {
                             onMessage(command);

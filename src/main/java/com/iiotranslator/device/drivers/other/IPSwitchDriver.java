@@ -2,7 +2,6 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers.other;
 
 import com.iiotranslator.device.DeviceRequest;
@@ -12,6 +11,12 @@ import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.service.Device;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
@@ -19,13 +24,6 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Driver to read the energy usage of an IPswitch device. Tested with IPswitch-S0m-Wifi.
@@ -38,8 +36,14 @@ public class IPSwitchDriver implements DeviceDriver {
     private Duration impulseBackupInterval;
     private WebClient client;
 
-    private VariableNode name, device_model, mac_address, signal_strength, energy_Wh, power_W,
-            impulse_counter, impulses_per_kWh;
+    private VariableNode name,
+            device_model,
+            mac_address,
+            signal_strength,
+            energy_Wh,
+            power_W,
+            impulse_counter,
+            impulses_per_kWh;
 
     @Override
     public void initialize(Device device, FolderNode deviceFolderNode) {
@@ -51,8 +55,8 @@ public class IPSwitchDriver implements DeviceDriver {
         int timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "8000"));
         Duration backupInterval = null;
         try {
-            backupInterval = Duration.ofHours(Long.parseLong(
-                    device.getOptionOrDefault("impulseBackupIntervalHours", "24")));
+            backupInterval =
+                    Duration.ofHours(Long.parseLong(device.getOptionOrDefault("impulseBackupIntervalHours", "24")));
         } catch (NumberFormatException ignored) {
         }
         impulseBackupInterval = backupInterval;
@@ -90,7 +94,7 @@ public class IPSwitchDriver implements DeviceDriver {
                     .block();
             log.trace("[{}]: Response: {}", device.getName(), impulseRaw);
             var matcher = IMPULSE_PATTERN.matcher(impulseRaw);
-            if(matcher.find()) {
+            if (matcher.find()) {
                 var impulseCount = Long.parseLong(matcher.group(1));
                 checkAndUpdateImpulseCount(impulseCount);
                 var impulsesPerKWh = Long.parseLong(matcher.group(2));
@@ -108,15 +112,17 @@ public class IPSwitchDriver implements DeviceDriver {
             log.trace("[{}]: Response: {}", device.getName(), valuesRaw);
             String[] values = valuesRaw.split(",");
             variableValues.put(device_model, new DataValue(new Variant(values[0])));
-            for(int i = 2; i < values.length - 1; i += 2) {
+            for (int i = 2; i < values.length - 1; i += 2) {
                 var key = values[i].substring(0, values[i].length() - 1);
                 var value = values[i + 1];
                 switch (key) {
                     case "name" -> variableValues.put(name, new DataValue(new Variant(value)));
                     case "mac" -> variableValues.put(mac_address, new DataValue(new Variant(value)));
                     case "S01" -> variableValues.put(energy_Wh, new DataValue(new Variant(Long.parseLong(value))));
-                    case "Verbrauch_Ver" -> variableValues.put(power_W, new DataValue(new Variant(Long.parseLong(value))));
-                    case "rssi" -> variableValues.put(signal_strength, new DataValue(new Variant(Integer.parseInt(value))));
+                    case "Verbrauch_Ver" -> variableValues.put(
+                            power_W, new DataValue(new Variant(Long.parseLong(value))));
+                    case "rssi" -> variableValues.put(
+                            signal_strength, new DataValue(new Variant(Integer.parseInt(value))));
                 }
             }
         } catch (Exception e) {
@@ -125,8 +131,8 @@ public class IPSwitchDriver implements DeviceDriver {
             for (DeviceRequest request : requestQueue) {
                 var readRequest = (DeviceRequest.ReadRequest) request;
                 var variable = readRequest.getVariable();
-                listener.completeReadRequest(readRequest,
-                        variableValues.getOrDefault(variable, new DataValue(StatusCode.BAD)));
+                listener.completeReadRequest(
+                        readRequest, variableValues.getOrDefault(variable, new DataValue(StatusCode.BAD)));
             }
         }
     }
@@ -138,11 +144,14 @@ public class IPSwitchDriver implements DeviceDriver {
     private Instant lastBackupTime = Instant.now();
 
     private void checkAndUpdateImpulseCount(long impulseCount) {
-        if(lastImpulseCount == null || impulseCount > lastImpulseCount) {
+        if (lastImpulseCount == null || impulseCount > lastImpulseCount) {
             lastImpulseCount = impulseCount;
-        } else if(impulseCount < lastImpulseCount) {
-            log.debug("[{}]: Impulse counter reset detected ({} to {}), restoring old value", device.getName(),
-                    lastImpulseCount, impulseCount);
+        } else if (impulseCount < lastImpulseCount) {
+            log.debug(
+                    "[{}]: Impulse counter reset detected ({} to {}), restoring old value",
+                    device.getName(),
+                    lastImpulseCount,
+                    impulseCount);
             writeImpulseCount(lastImpulseCount);
         }
         variableValues.put(impulse_counter, new DataValue(new Variant(lastImpulseCount)));
@@ -162,23 +171,20 @@ public class IPSwitchDriver implements DeviceDriver {
     }
 
     private boolean eepromWriteEnabled = false;
+
     private void enableEepromWrite() {
-        if(!eepromWriteEnabled) {
+        if (!eepromWriteEnabled) {
             log.debug("[{}]: Enabling EEPROM write", device.getName());
-            client.get()
-                    .uri("/?eep=1")
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+            client.get().uri("/?eep=1").retrieve().bodyToMono(String.class).block();
             eepromWriteEnabled = true;
         }
     }
 
     private void backupIfNecessary() {
         // Backup impulse count to device, by default every 24 hours
-        if(impulseBackupInterval != null && Instant.now().isAfter(lastBackupTime.plus(impulseBackupInterval))) {
+        if (impulseBackupInterval != null && Instant.now().isAfter(lastBackupTime.plus(impulseBackupInterval))) {
             // don't backup if the impulse count didn't change
-            if(lastBackupImpulseCount == null || !lastBackupImpulseCount.equals(lastImpulseCount)) {
+            if (lastBackupImpulseCount == null || !lastBackupImpulseCount.equals(lastImpulseCount)) {
                 log.debug("[{}]: Backing up impulse count {}", device.getName(), lastImpulseCount);
                 writeImpulseCount(lastImpulseCount);
                 lastBackupImpulseCount = lastImpulseCount;

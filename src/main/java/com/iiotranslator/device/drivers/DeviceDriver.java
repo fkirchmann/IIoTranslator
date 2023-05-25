@@ -2,14 +2,12 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers;
 
 import com.iiotranslator.device.DeviceRequest;
 import com.iiotranslator.device.DeviceRequestCompletionListener;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.service.Device;
-
 import java.util.List;
 
 public interface DeviceDriver {

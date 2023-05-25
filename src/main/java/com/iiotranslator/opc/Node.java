@@ -2,23 +2,21 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.opc;
 
+import java.util.List;
+import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaNode;
 
-import java.util.List;
-import java.util.stream.Stream;
-
 @Getter
-@EqualsAndHashCode(of="path")
+@EqualsAndHashCode(of = "path")
 public abstract class Node {
     Node(OpcNamespace opcNamespace, @NonNull String name, @NonNull Node parent) {
-        if(name.contains("/")) {
+        if (name.contains("/")) {
             throw new IllegalArgumentException("Node name cannot contain '/'");
         }
         this.name = name;
@@ -46,6 +44,7 @@ public abstract class Node {
 
     @Getter(AccessLevel.PACKAGE)
     private final OpcNamespace opcNamespace;
+
     @Getter(AccessLevel.PACKAGE)
     private final UaNode uaNode;
 

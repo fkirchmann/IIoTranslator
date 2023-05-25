@@ -2,7 +2,6 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device;
 
 import com.iiotranslator.device.drivers.KnownDeviceDrivers;
@@ -10,17 +9,16 @@ import com.iiotranslator.opc.*;
 import com.iiotranslator.service.DevicesConfiguration;
 import com.iiotranslator.service.OpcServerService;
 import jakarta.annotation.PostConstruct;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Manages Device Drivers and distributes requests to them.
@@ -68,8 +66,8 @@ public class DevicesService implements VariableNodeAccessor {
     }
 
     private DeviceDriverThread getDriver(Node node) {
-        for(var entry : devices.entrySet()) {
-            if(entry.getKey().isParentOf(node)) {
+        for (var entry : devices.entrySet()) {
+            if (entry.getKey().isParentOf(node)) {
                 return entry.getValue();
             }
         }

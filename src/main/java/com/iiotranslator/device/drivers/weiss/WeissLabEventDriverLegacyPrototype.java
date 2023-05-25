@@ -2,7 +2,6 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers.weiss;
 
 import com.google.gson.Gson;
@@ -14,6 +13,12 @@ import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.service.Device;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -28,13 +33,6 @@ import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
-import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * NOTE: This driver is an abandoned prototype, designed to use reactive websockets to connect to
  * the Weiss LabEvent ovens. It is not working, and is not used in production.
@@ -45,9 +43,7 @@ public class WeissLabEventDriverLegacyPrototype implements DeviceDriver {
     private String hostname, user, password;
     private int port, timeout;
 
-    public WeissLabEventDriverLegacyPrototype(Device device, FolderNode deviceFolder) {
-
-    }
+    public WeissLabEventDriverLegacyPrototype(Device device, FolderNode deviceFolder) {}
 
     private final Map<String, VariableNode> variables = new HashMap<>();
     private final Map<VariableNode, DataValue> values = new HashMap<>();
@@ -60,7 +56,7 @@ public class WeissLabEventDriverLegacyPrototype implements DeviceDriver {
         password = device.getOptionOrDefault("password", "admin");
         port = Integer.parseInt(device.getOptionOrDefault("port", "443"));
         timeout = Integer.parseInt(device.getOptionOrDefault("timeout", "2000"));
-        if(user.contains(",") || password.contains(",")) {
+        if (user.contains(",") || password.contains(",")) {
             throw new IllegalArgumentException("User or password must not contain a comma (,)");
         }
 
@@ -128,27 +124,31 @@ public class WeissLabEventDriverLegacyPrototype implements DeviceDriver {
         // subscribe to all variables
         send(Command.subscribe(variables.keySet().toArray(new String[0])));
         WebSocketClient client = new ReactorNettyWebSocketClient(DriverUtil.createHttpClient(timeout));
-        client.execute(
-                        URI.create("ws://" + hostname + ":" + port),
-                        new WebSocketHandler() {
-                            @Override
-                            public List<String> getSubProtocols() {
-                                return List.of("smarthmi-connect");
-                            }
-                            @Override
-                            public Mono<Void> handle(WebSocketSession session) {
-                                return Mono.zip(
+        client.execute(URI.create("ws://" + hostname + ":" + port), new WebSocketHandler() {
+                    @Override
+                    public List<String> getSubProtocols() {
+                        return List.of("smarthmi-connect");
+                    }
+
+                    @Override
+                    public Mono<Void> handle(WebSocketSession session) {
+                        return Mono.zip(
                                         // Take outgoing messages from the sink and send them to the server
-                                        sendSink.asFlux().map(message -> {
-                                            log.trace("[{}] Sending: {}", device.getName(), message);
-                                            return session.textMessage(message);
-                                        }).then(),
+                                        sendSink.asFlux()
+                                                .map(message -> {
+                                                    log.trace("[{}] Sending: {}", device.getName(), message);
+                                                    return session.textMessage(message);
+                                                })
+                                                .then(),
                                         // Receive messages from the server and handle them
-                                        session.receive().map(WebSocketMessage::getPayloadAsText)
-                                                .doOnNext(WeissLabEventDriverLegacyPrototype.this::handleMessage).then())
-                                    .then(session.close());
-                            }
-                        }).block();
+                                        session.receive()
+                                                .map(WebSocketMessage::getPayloadAsText)
+                                                .doOnNext(WeissLabEventDriverLegacyPrototype.this::handleMessage)
+                                                .then())
+                                .then(session.close());
+                    }
+                })
+                .block();
         log.trace("[{}]: Connection closed", device.getName());
     }
 
@@ -158,19 +158,18 @@ public class WeissLabEventDriverLegacyPrototype implements DeviceDriver {
     private void handleMessage(String message) {
         log.trace("[{}]: Received message: {}", device.getName(), message);
         Matcher valMatcher = MESSAGE_VALUE_PATTERN.matcher(message);
-        if(valMatcher.matches()) {
+        if (valMatcher.matches()) {
             var variable = variables.get(valMatcher.group(1));
             String value = valMatcher.group(2);
-            if(variable != null) {
+            if (variable != null) {
                 values.put(variable, DriverUtil.convertValue(variable, value));
             }
         }
         // parse message JSON
         try {
-            @NonNull
-            var multiCommand = gson.fromJson(message, Command.class);
-            if(multiCommand.getCmd().equals("multi")) {
-                for(String command : multiCommand.getData()) {
+            @NonNull var multiCommand = gson.fromJson(message, Command.class);
+            if (multiCommand.getCmd().equals("multi")) {
+                for (String command : multiCommand.getData()) {
                     handleMessage(command);
                 }
             }

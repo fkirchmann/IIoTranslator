@@ -2,30 +2,32 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.service;
 
 import com.iiotranslator.opc.OpcServer;
 import jakarta.annotation.PostConstruct;
+import java.util.Set;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
-
 @Service
 @Slf4j
 public class OpcServerService {
     @Value("${iiot.opcua.bindAddress}")
     private String bindAddress;
+
     @Value("${iiot.opcua.bindPortTcp}")
     private int bindPortTcp;
+
     @Value("${iiot.opcua.hostnames}")
     private Set<String> hostnames;
+
     @Value("${iiot.opcua.username}")
     private String username;
+
     @Value("${iiot.opcua.password}")
     private String password;
 

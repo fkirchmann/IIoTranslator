@@ -2,17 +2,15 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.opc;
-
-import lombok.Synchronized;
-import org.eclipse.milo.opcua.sdk.server.nodes.UaFolderNode;
-import org.eclipse.milo.opcua.sdk.server.nodes.UaNode;
-import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import lombok.Synchronized;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaFolderNode;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaNode;
+import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 
 public class FolderNode extends Node {
     private final List<Node> children = Collections.synchronizedList(new ArrayList<>());
@@ -85,7 +83,7 @@ public class FolderNode extends Node {
 
     @Synchronized("children")
     private void addChild(Node child) {
-        if(getChild(child.getName()) != null) {
+        if (getChild(child.getName()) != null) {
             throw new IllegalArgumentException("Node with path " + child.getPath() + " already exists!");
         }
         children.add(child);

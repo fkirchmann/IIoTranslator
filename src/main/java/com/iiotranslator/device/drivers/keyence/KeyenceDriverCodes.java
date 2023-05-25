@@ -2,37 +2,73 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers.keyence;
-
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 public class KeyenceDriverCodes {
 
     @RequiredArgsConstructor
     @Getter
     public enum ErrorResponses {
-        UNRECOGNIZABLE_ERROR(0, "Command Unrecognizable error", "An undefined identification code was sent.", "Check the data contents, and then send the correct data."),
-        BUSY_ERROR(1, "Busy error", "Because the MK-U6000 is busy printing or performing another operation, the command cannot be executed.", "After printing or another command has finished, resend the command."),
-        STATUS_ERROR(2, "Status error", "Because an abnormal or caution level error has occurred, the command cannot be executed.", "After confirming the error contents using the \"EW\" command and removing the cause of the error, cancel the error and change the MK-U6000 to RUN status."),
-        PRIORITY_ERROR(3, "Priority error", "A setting or initialize command was sent while the console had priority.", "Switch the console to the Main screen, and then resend the command."),
-        DATA_LENGTH_ERROR(20, "Data length error", "The data length of the command is invalid.", "Check the data contents, and then send the correct data."),
-        DATA_RANGE_ERROR(22, "Data range error", "Data out of the setting range was received.", "Check the data contents, and then send the correct data."),
-        MEMORY_OVER_ERROR(31, "Memory over error", "The command data exceeds the number of characters that can be stored in a single setting.", "Reduce the number of characters to 4,000 bytes or less, and then resend the command."),
-        TIMEOUT_ERROR(40, "Time-out error", "The MK-U6000 is in a state such that it cannot process the response within 3 seconds.", "Resend the command (Ethernet only)."),
-        INVALID_CHECKSUM_ERROR(90, "Invalid checksum error", "The checksum value is invalid.", "Check the data and checksum contents, and then send the correct data.");
+        UNRECOGNIZABLE_ERROR(
+                0,
+                "Command Unrecognizable error",
+                "An undefined identification code was sent.",
+                "Check the data contents, and then send the correct data."),
+        BUSY_ERROR(
+                1,
+                "Busy error",
+                "Because the MK-U6000 is busy printing or performing another operation, the command cannot be executed.",
+                "After printing or another command has finished, resend the command."),
+        STATUS_ERROR(
+                2,
+                "Status error",
+                "Because an abnormal or caution level error has occurred, the command cannot be executed.",
+                "After confirming the error contents using the \"EW\" command and removing the cause of the error, cancel the error and change the MK-U6000 to RUN status."),
+        PRIORITY_ERROR(
+                3,
+                "Priority error",
+                "A setting or initialize command was sent while the console had priority.",
+                "Switch the console to the Main screen, and then resend the command."),
+        DATA_LENGTH_ERROR(
+                20,
+                "Data length error",
+                "The data length of the command is invalid.",
+                "Check the data contents, and then send the correct data."),
+        DATA_RANGE_ERROR(
+                22,
+                "Data range error",
+                "Data out of the setting range was received.",
+                "Check the data contents, and then send the correct data."),
+        MEMORY_OVER_ERROR(
+                31,
+                "Memory over error",
+                "The command data exceeds the number of characters that can be stored in a single setting.",
+                "Reduce the number of characters to 4,000 bytes or less, and then resend the command."),
+        TIMEOUT_ERROR(
+                40,
+                "Time-out error",
+                "The MK-U6000 is in a state such that it cannot process the response within 3 seconds.",
+                "Resend the command (Ethernet only)."),
+        INVALID_CHECKSUM_ERROR(
+                90,
+                "Invalid checksum error",
+                "The checksum value is invalid.",
+                "Check the data and checksum contents, and then send the correct data.");
 
         private final int code;
         private final String name, description, countermeasures;
 
         public String toString() {
-            return String.format("ErrorResponse (code %d): %s / Description: %s / Countermeasures: %s", code, name, description, countermeasures);
+            return String.format(
+                    "ErrorResponse (code %d): %s / Description: %s / Countermeasures: %s",
+                    code, name, description, countermeasures);
         }
     }
 
@@ -99,8 +135,10 @@ public class KeyenceDriverCodes {
         SLEEP_MODE_SHUTDOWN(32, "Sleep mode (shutdown)"),
         SLEEP_MODE_WAITING(33, "Sleep mode (waiting)"),
         SLEEP_MODE_OPERATING(34, "Sleep mode (operating)"),
-        STOPPED_VIEWING_CLEANING_AND_SHUTDOWN_CONFIRMING_SCREEN(35, "Stopped (viewing cleaning and shutdown confirming screen)"),
-        STOPPED_VIEWING_AUTOMATIC_CIRCULATION_CONFIRMING_SCREEN(36, "Stopped (viewing automatic circulation confirming screen)(PY/PW)"),
+        STOPPED_VIEWING_CLEANING_AND_SHUTDOWN_CONFIRMING_SCREEN(
+                35, "Stopped (viewing cleaning and shutdown confirming screen)"),
+        STOPPED_VIEWING_AUTOMATIC_CIRCULATION_CONFIRMING_SCREEN(
+                36, "Stopped (viewing automatic circulation confirming screen)(PY/PW)"),
         CANCEL_MAINTENANCE(37, "Cancel maintenance"),
         RESTART_MAINTENANCE(38, "Restart Maintenance"),
         PAUSING_MAINTENANCE(39, "Pausing Maintenance"),
@@ -128,7 +166,9 @@ public class KeyenceDriverCodes {
      * Ordered from least to most severe.
      */
     public enum ErrorLevel implements Comparable<ErrorLevel> {
-        OK, CAUTION, ABNORMAL
+        OK,
+        CAUTION,
+        ABNORMAL
     }
 
     @RequiredArgsConstructor
@@ -198,7 +238,8 @@ public class KeyenceDriverCodes {
         MAIN_TANK_SUPPLY_ABNORMAL_ERROR(66, ErrorLevel.ABNORMAL, "Main Tank Supply Abnormal Error"),
         DRAIN_ERROR(67, ErrorLevel.ABNORMAL, "Drain Error"),
         PRESSURE_ERROR(68, ErrorLevel.ABNORMAL, "Pressure Error"),
-        CV_X_SEND_JUDGMENT_CHARACTER_STRING_ERROR_1(69, ErrorLevel.ABNORMAL, "CV-X Send Judgment Character String Error 1"),
+        CV_X_SEND_JUDGMENT_CHARACTER_STRING_ERROR_1(
+                69, ErrorLevel.ABNORMAL, "CV-X Send Judgment Character String Error 1"),
         CV_X_TRIGGER_DELAY_ERROR(70, ErrorLevel.ABNORMAL, "CV-X Trigger Delay Error"),
         CV_X_TRIGGER_TRACKING_COUNT_OVER_ERROR(71, ErrorLevel.ABNORMAL, "CV-X Trigger Tracking Count Over Error"),
         TRIGGER_DELAY_OVER_ERROR(72, ErrorLevel.ABNORMAL, "Trigger Delay Over Error"),
@@ -207,14 +248,17 @@ public class KeyenceDriverCodes {
         VISCOMETER_COUNT_ERROR_3(75, ErrorLevel.ABNORMAL, "Viscometer Count Error 3"),
         VISCOMETER_COUNT_ERROR_4(76, ErrorLevel.ABNORMAL, "Viscometer Count Error 4"),
         ETHERNET_COMMUNICATION_DISCONNECT_ERROR(91, ErrorLevel.ABNORMAL, "Ethernet Communication Disconnect Error"),
-        CV_X_LINKED_COMMUNICATION_DISCONNECT_ERROR(92, ErrorLevel.ABNORMAL, "CV-X Linked Communication Disconnect Error"),
+        CV_X_LINKED_COMMUNICATION_DISCONNECT_ERROR(
+                92, ErrorLevel.ABNORMAL, "CV-X Linked Communication Disconnect Error"),
         INTERNAL_COMMUNICATION_TIMEOUT_ERROR(93, ErrorLevel.ABNORMAL, "Internal Communication Timeout Error"),
         SOFT_ERROR_2(94, ErrorLevel.ABNORMAL, "Soft Error 2"),
         SNTP_TIME_MISALIGNMENT_DETECTED(95, ErrorLevel.ABNORMAL, "SNTP Time Misalignment Detected"),
         CV_X_INSPECTION_SETTING_SWITCH_ERROR_1(96, ErrorLevel.ABNORMAL, "CV-X Inspection Setting Switch Error 1"),
         CV_X_INSPECTION_SETTING_SWITCH_ERROR_2(97, ErrorLevel.ABNORMAL, "CV-X Inspection Setting Switch Error 2"),
-        CV_X_SEND_JUDGMENT_CHARACTER_STRING_ERROR_2(98, ErrorLevel.ABNORMAL, "CV-X Send Judgment Character String Error 2"),
-        CV_X_SEND_JUDGMENT_CHARACTER_STRING_ERROR_3(99, ErrorLevel.ABNORMAL, "CV-X Send Judgment Character String Error 3"),
+        CV_X_SEND_JUDGMENT_CHARACTER_STRING_ERROR_2(
+                98, ErrorLevel.ABNORMAL, "CV-X Send Judgment Character String Error 2"),
+        CV_X_SEND_JUDGMENT_CHARACTER_STRING_ERROR_3(
+                99, ErrorLevel.ABNORMAL, "CV-X Send Judgment Character String Error 3"),
 
         INK_CARTRIDGE_EMPTY_WARNING(101, ErrorLevel.CAUTION, "Ink Cartridge Empty Warning"),
         SOLVENT_CARTRIDGE_EMPTY_WARNING(102, ErrorLevel.CAUTION, "Solvent Cartridge Empty Warning"),
@@ -239,7 +283,8 @@ public class KeyenceDriverCodes {
         SNTP_TIME_MISALIGNMENT_DETECTED_2(122, ErrorLevel.CAUTION, "SNTP Time Misalignment Detected"),
         TRACKING_COUNT_OVER_WARNING(123, ErrorLevel.CAUTION, "Tracking Count Over Warning"),
         ETHERNET_COMMUNICATION_DISCONNECT_WARNING(124, ErrorLevel.CAUTION, "Ethernet Communication Disconnect Warning"),
-        CV_X_LINKED_COMMUNICATION_DISCONNECT_WARNING(125, ErrorLevel.CAUTION, "CV-X Linked Communication Disconnect Warning"),
+        CV_X_LINKED_COMMUNICATION_DISCONNECT_WARNING(
+                125, ErrorLevel.CAUTION, "CV-X Linked Communication Disconnect Warning"),
         PRINT_TRIGGER_DETECTED_DURING_READY_OFF(126, ErrorLevel.CAUTION, "Print Trigger Detected During Ready OFF"),
         INK_PATH_UNIT_LIFESPAN_WARNING(127, ErrorLevel.CAUTION, "Ink Path Unit Lifespan Warning"),
         SOLENOID_VALVE_SIMULTANEOUS_DRIVE(128, ErrorLevel.CAUTION, "Solenoid Valve Simultaneous Drive"),
@@ -260,8 +305,10 @@ public class KeyenceDriverCodes {
         ILLEGAL_POWER_DISCONNECT_DETECTED(145, ErrorLevel.CAUTION, "Illegal Power Disconnect Detected"),
         INK_CARTRIDGE_EXPIRED(147, ErrorLevel.CAUTION, "Ink Cartridge Expired"),
         SOLVENT_CARTRIDGE_EXPIRED(148, ErrorLevel.CAUTION, "Solvent Cartridge Expired"),
-        INK_CARTRIDGE_NOT_INSERTED_FOR_1_HOUR_OR_MORE(149, ErrorLevel.CAUTION, "Ink Cartridge Not Inserted for 1 Hour or More"),
-        SOLVENT_CARTRIDGE_NOT_INSERTED_FOR_1_HOUR_OR_MORE(150, ErrorLevel.CAUTION, "Solvent Cartridge Not Inserted for 1 Hour or More"),
+        INK_CARTRIDGE_NOT_INSERTED_FOR_1_HOUR_OR_MORE(
+                149, ErrorLevel.CAUTION, "Ink Cartridge Not Inserted for 1 Hour or More"),
+        SOLVENT_CARTRIDGE_NOT_INSERTED_FOR_1_HOUR_OR_MORE(
+                150, ErrorLevel.CAUTION, "Solvent Cartridge Not Inserted for 1 Hour or More"),
         CLEANING_INSIDE_PATH_REQUIRED(151, ErrorLevel.CAUTION, "Cleaning Inside Path Required"),
         RS_232_COMMUNICATION_ERROR(152, ErrorLevel.CAUTION, "RS-232 Communication Error"),
         AIR_INTAKE_FAN_LOCKED_WARNING(153, ErrorLevel.CAUTION, "Air Intake Fan Locked Warning"),
@@ -271,11 +318,14 @@ public class KeyenceDriverCodes {
         AIR_PUMP_ERROR_2(157, ErrorLevel.CAUTION, "Air Pump Error"),
         INK_PATH_UNIT_REPLACEMENT_WARNING(158, ErrorLevel.CAUTION, "Ink Path Unit Replacement Warning"),
         MAIN_TANK_FULL_WARNING(159, ErrorLevel.CAUTION, "Main Tank Full Warning"),
-        CV_X_SEND_JUDGMENT_CHARACTER_STRING_WARNING_1(160, ErrorLevel.CAUTION, "CV-X Send Judgment Character String Warning 1"),
+        CV_X_SEND_JUDGMENT_CHARACTER_STRING_WARNING_1(
+                160, ErrorLevel.CAUTION, "CV-X Send Judgment Character String Warning 1"),
         CV_X_INSPECTION_SETTING_SWITCH_WARNING_1(181, ErrorLevel.CAUTION, "CV-X Inspection Setting Switch Warning 1"),
         CV_X_INSPECTION_SETTING_SWITCH_WARNING_2(182, ErrorLevel.CAUTION, "CV-X Inspection Setting Switch Warning 2"),
-        CV_X_SEND_JUDGMENT_CHARACTER_STRING_WARNING_2(183, ErrorLevel.CAUTION, "CV-X Send Judgment Character String Warning 2"),
-        CV_X_SEND_JUDGMENT_CHARACTER_STRING_WARNING_3(184, ErrorLevel.CAUTION, "CV-X Send Judgment Character String Warning 3"),
+        CV_X_SEND_JUDGMENT_CHARACTER_STRING_WARNING_2(
+                183, ErrorLevel.CAUTION, "CV-X Send Judgment Character String Warning 2"),
+        CV_X_SEND_JUDGMENT_CHARACTER_STRING_WARNING_3(
+                184, ErrorLevel.CAUTION, "CV-X Send Judgment Character String Warning 3"),
         LOW_MAIN_TANK_LEVEL(185, ErrorLevel.CAUTION, "Low Main Tank Level"),
         LEFT_SOLVENT_CARTRIDGE_EMPTY_WARNING(186, ErrorLevel.CAUTION, "Left Solvent Cartridge Empty Warning"),
         INK_CARTRIDGE_SETTLING_WARNING(187, ErrorLevel.CAUTION, "Ink Cartridge Settling Warning");

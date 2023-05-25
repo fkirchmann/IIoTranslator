@@ -2,9 +2,13 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.opc;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Synchronized;
@@ -27,44 +31,32 @@ import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-
 @Slf4j
 public class OpcNamespace extends ManagedNamespaceWithLifecycle {
     public static final String NAMESPACE_URI = "urn:com:iiotranslator:opcuans";
 
     private final OpcServer server;
     private final SubscriptionModel subscriptionModel;
+
     @Getter
     private final CompletableFuture<RootNode> rootNodeCompletableFuture;
 
     private final Map<VariableNode, DataValue> variableValues = new ConcurrentHashMap<>();
 
-    OpcNamespace(@NonNull OpcServer server,
-                 @NonNull CompletableFuture<RootNode> rootNodeCompletableFuture) {
+    OpcNamespace(@NonNull OpcServer server, @NonNull CompletableFuture<RootNode> rootNodeCompletableFuture) {
         super(server.getUaServer(), NAMESPACE_URI);
         this.server = server;
         this.rootNodeCompletableFuture = rootNodeCompletableFuture;
         subscriptionModel = new SubscriptionModel(server.getUaServer(), this);
         getLifecycleManager().addLifecycle(subscriptionModel);
         // Signals that nodes can be created
-        getLifecycleManager().addStartupTask(() ->
-                rootNodeCompletableFuture.complete(new RootNode(this)));
+        getLifecycleManager().addStartupTask(() -> rootNodeCompletableFuture.complete(new RootNode(this)));
     }
 
     @Synchronized
     void registerRootChildNode(@NonNull UaNode uaNode) {
-        uaNode.addReference(new Reference(
-                uaNode.getNodeId(),
-                Identifiers.Organizes,
-                Identifiers.ObjectsFolder.expanded(),
-                false
-        ));
+        uaNode.addReference(
+                new Reference(uaNode.getNodeId(), Identifiers.Organizes, Identifiers.ObjectsFolder.expanded(), false));
     }
 
     @Synchronized
@@ -75,14 +67,14 @@ public class OpcNamespace extends ManagedNamespaceWithLifecycle {
     @Synchronized
     UaVariableNode createVariableNode(@NonNull VariableNode variableNode) {
         var uaVariableNode = new UaVariableNode.UaVariableNodeBuilder(getNodeContext())
-            .setNodeId(newNodeId(variableNode.getPathString()))
-            .setAccessLevel(variableNode.isWritable() ? AccessLevel.READ_WRITE : AccessLevel.READ_ONLY)
-            .setBrowseName(newQualifiedName(variableNode.getName()))
-            .setDisplayName(LocalizedText.english(variableNode.getName()))
-            .setDataType(variableNode.getDataType())
-            .setTypeDefinition(Identifiers.BaseDataVariableType)
-            .build();
-        //uaVariableNode.setAllowNulls(true);
+                .setNodeId(newNodeId(variableNode.getPathString()))
+                .setAccessLevel(variableNode.isWritable() ? AccessLevel.READ_WRITE : AccessLevel.READ_ONLY)
+                .setBrowseName(newQualifiedName(variableNode.getName()))
+                .setDisplayName(LocalizedText.english(variableNode.getName()))
+                .setDataType(variableNode.getDataType())
+                .setTypeDefinition(Identifiers.BaseDataVariableType)
+                .build();
+        // uaVariableNode.setAllowNulls(true);
         var writeLock = new Object();
         AtomicBoolean isWritingReadValue = new AtomicBoolean(false);
 
@@ -106,36 +98,31 @@ public class OpcNamespace extends ManagedNamespaceWithLifecycle {
                 return ctx.getAttribute(attributeId);
             }
         });
-        uaVariableNode.getFilterChain().addLast(
-            AttributeFilters.setValue(
-                (ctx, value) -> {
-                    synchronized (writeLock) {
-                        if(isWritingReadValue.get()) {
-                            return;
-                        }
-                        if (variableNode instanceof WritableVariableNode writableVariableNode) {
-                            if(variableNode.isWritable()) {
-                                server.getVariableNodeAccessor().writeSync(writableVariableNode, value);
-                            } else {
-                                log.warn("Attempt to write to read-only node: {}",
-                                        variableNode.getPathString());
-                            }
-                        }
+        uaVariableNode.getFilterChain().addLast(AttributeFilters.setValue((ctx, value) -> {
+            synchronized (writeLock) {
+                if (isWritingReadValue.get()) {
+                    return;
+                }
+                if (variableNode instanceof WritableVariableNode writableVariableNode) {
+                    if (variableNode.isWritable()) {
+                        server.getVariableNodeAccessor().writeSync(writableVariableNode, value);
+                    } else {
+                        log.warn("Attempt to write to read-only node: {}", variableNode.getPathString());
                     }
                 }
-            )
-        );
+            }
+        }));
         getNodeManager().addNode(uaVariableNode);
         return uaVariableNode;
     }
 
     @Synchronized
     UaFolderNode createFolderNode(@NonNull FolderNode node) {
-        var folder = new UaFolderNode(getNodeContext(),
+        var folder = new UaFolderNode(
+                getNodeContext(),
                 newNodeId(node.getPathString()),
                 newQualifiedName(node.getName()),
-                LocalizedText.english(node.getName())
-        );
+                LocalizedText.english(node.getName()));
         getNodeManager().addNode(folder);
         return folder;
     }

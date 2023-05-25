@@ -2,7 +2,6 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers;
 
 import com.iiotranslator.device.drivers.binder.BinderKBDriver;
@@ -11,7 +10,6 @@ import com.iiotranslator.device.drivers.other.IPSwitchDriver;
 import com.iiotranslator.device.drivers.other.TestDriver;
 import com.iiotranslator.device.drivers.weiss.WeissLabEventDriver;
 import com.iiotranslator.service.Device;
-
 import java.util.function.Supplier;
 
 public class KnownDeviceDrivers {
@@ -21,16 +19,16 @@ public class KnownDeviceDrivers {
 
     public static Supplier<DeviceDriver> getDriverSupplier(Device device) throws UnknownDriverException {
         return switch (device.getDriver()) {
-            // ------------------------------------------------------------------------------------------
-            // Register all drivers here
-            // ------------------------------------------------------------------------------------------
+                // ------------------------------------------------------------------------------------------
+                // Register all drivers here
+                // ------------------------------------------------------------------------------------------
             case "test" -> TestDriver::new;
             case "ipswitch" -> IPSwitchDriver::new;
             case "binder_kb" -> BinderKBDriver::new;
             case "binder_kbf" -> BinderKBFDriver::new;
             case "weiss_labevent" -> WeissLabEventDriver::new;
-            // ------------------------------------------------------------------------------------------
-            default ->throw new UnknownDriverException("Unknown device driver: " + device.getDriver());
+                // ------------------------------------------------------------------------------------------
+            default -> throw new UnknownDriverException("Unknown device driver: " + device.getDriver());
         };
     }
 

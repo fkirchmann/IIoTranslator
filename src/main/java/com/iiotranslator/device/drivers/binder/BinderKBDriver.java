@@ -2,19 +2,13 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers.binder;
 
-import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
+import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.service.Device;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.milo.opcua.stack.core.Identifiers;
-import org.eclipse.milo.opcua.stack.core.StatusCodes;
-import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,6 +20,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.milo.opcua.stack.core.Identifiers;
+import org.eclipse.milo.opcua.stack.core.StatusCodes;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 
 @Slf4j
 public class BinderKBDriver implements NonBatchingDeviceDriver {
@@ -55,18 +53,18 @@ public class BinderKBDriver implements NonBatchingDeviceDriver {
 
     @Override
     public DataValue read(VariableNode variable) {
-        if(!ensureConnected()) {
+        if (!ensureConnected()) {
             return new DataValue(StatusCodes.Bad_NoCommunication);
         }
         try {
             var command = "CANIDGetValue:" + variableMap.get(variable);
-            writer.write( command + "\r\n");
+            writer.write(command + "\r\n");
             writer.flush();
             // Discard the first line, it just contains the length of the following line
             reader.readLine();
             // Read the response to the command.
             String response = reader.readLine().substring(command.length() + 1);
-            if(convertKelvinToCelsius.contains(variable)) {
+            if (convertKelvinToCelsius.contains(variable)) {
                 response = String.valueOf(Double.parseDouble(response) - 273.15);
             }
             return DriverUtil.convertValue(variable, response);
@@ -96,8 +94,8 @@ public class BinderKBDriver implements NonBatchingDeviceDriver {
     }
 
     private boolean ensureConnected() {
-        if(socket != null) {
-            if(socket.isConnected()) {
+        if (socket != null) {
+            if (socket.isConnected()) {
                 return true;
             } else {
                 disconnect();
@@ -106,8 +104,10 @@ public class BinderKBDriver implements NonBatchingDeviceDriver {
         try {
             socket = new Socket();
             socket.setSoTimeout(timeout);
-            socket.connect(new InetSocketAddress(device.getOption("hostname"),
-                    Integer.parseInt(device.getOptionOrDefault("port", "9000"))), timeout);
+            socket.connect(
+                    new InetSocketAddress(
+                            device.getOption("hostname"), Integer.parseInt(device.getOptionOrDefault("port", "9000"))),
+                    timeout);
             writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
             return true;

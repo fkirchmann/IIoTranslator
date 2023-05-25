@@ -2,15 +2,13 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers;
 
 import com.iiotranslator.device.DeviceRequest;
 import com.iiotranslator.device.DeviceRequestCompletionListener;
 import com.iiotranslator.opc.VariableNode;
-import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
-
 import java.util.List;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 
 /**
  * An abstract base class for drivers that do not need to process multiple requests at once.

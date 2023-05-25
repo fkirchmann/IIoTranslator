@@ -2,15 +2,13 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.service;
 
+import java.util.Map;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-
-import java.util.Map;
 
 @ToString
 @EqualsAndHashCode
@@ -23,7 +21,7 @@ public class Device {
     private final Map<String, String> options;
 
     public String getOption(String key) {
-        if(!options.containsKey(key)) {
+        if (!options.containsKey(key)) {
             throw new IllegalArgumentException("Device " + name + " is missing option " + key);
         }
         return options.get(key);

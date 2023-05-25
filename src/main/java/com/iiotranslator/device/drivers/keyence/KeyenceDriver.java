@@ -2,7 +2,6 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-
 package com.iiotranslator.device.drivers.keyence;
 
 import com.iiotranslator.device.DeviceRequest;
@@ -11,12 +10,6 @@ import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.service.Device;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.milo.opcua.stack.core.Identifiers;
-import org.eclipse.milo.opcua.stack.core.StatusCodes;
-import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
-import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,6 +20,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.milo.opcua.stack.core.Identifiers;
+import org.eclipse.milo.opcua.stack.core.StatusCodes;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
+import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 
 /*
  * This driver supports Keyence's MK-U6000 industrial ink-jet printer.
@@ -61,11 +59,11 @@ public class KeyenceDriver implements DeviceDriver {
 
     @Override
     public void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener listener) {
-        if(!ensureConnected()) {
+        if (!ensureConnected()) {
             for (DeviceRequest request : requestQueue) {
-                if(request instanceof DeviceRequest.ReadRequest readRequest) {
+                if (request instanceof DeviceRequest.ReadRequest readRequest) {
                     listener.completeReadRequest(readRequest, new DataValue(StatusCodes.Bad_NoCommunication));
-                } else if(request instanceof DeviceRequest.WriteRequest writeRequest) {
+                } else if (request instanceof DeviceRequest.WriteRequest writeRequest) {
                     listener.completeWriteRequest(writeRequest, new IOException("Not connected"));
                 }
             }
@@ -81,33 +79,34 @@ public class KeyenceDriver implements DeviceDriver {
                 .collect(Collectors.toSet());
         var errorVariablesReadRequests = requestQueue.stream()
                 .filter(request -> request instanceof DeviceRequest.ReadRequest)
-                .filter(request -> errorVariables.contains(((DeviceRequest.ReadRequest) request).getVariable())).toList();
-        if(!errorVariables.isEmpty()) {
+                .filter(request -> errorVariables.contains(((DeviceRequest.ReadRequest) request).getVariable()))
+                .toList();
+        if (!errorVariables.isEmpty()) {
             try {
                 var errorCodesString = execCommand("EV");
                 var errorCodesSplit = errorCodesString.split(Pattern.quote(","));
                 KeyenceDriverCodes.ErrorLevel highestErrorLevel = KeyenceDriverCodes.ErrorLevel.OK;
                 StringBuilder errorCodesBuilder = new StringBuilder(), errorNamesBuilder = new StringBuilder();
-                for(int i = 1; i < errorCodesSplit.length; i++) {
+                for (int i = 1; i < errorCodesSplit.length; i++) {
                     var errorCode = Integer.parseInt(errorCodesSplit[i]);
                     var error = KeyenceDriverCodes.getSystemErrorCode(errorCode);
-                    if(error.getLevel().compareTo(highestErrorLevel) > 0) {
+                    if (error.getLevel().compareTo(highestErrorLevel) > 0) {
                         highestErrorLevel = error.getLevel();
                     }
                     errorCodesBuilder.append(errorCode).append(",");
                     errorNamesBuilder.append(error.getName()).append(",");
                 }
-                for(DeviceRequest request : errorVariablesReadRequests) {
-                    if(request instanceof DeviceRequest.ReadRequest readRequest) {
-                        if(readRequest.getVariable() == errorCodes) {
-                            listener.completeReadRequest(readRequest,
-                                    new DataValue(new Variant(errorCodesBuilder.toString())));
-                        } else if(readRequest.getVariable() == errorNames) {
-                            listener.completeReadRequest(readRequest,
-                                    new DataValue(new Variant(errorNamesBuilder.toString())));
-                        } else if(readRequest.getVariable() == errorLevel) {
-                            listener.completeReadRequest(readRequest,
-                                    new DataValue(new Variant(highestErrorLevel.name())));
+                for (DeviceRequest request : errorVariablesReadRequests) {
+                    if (request instanceof DeviceRequest.ReadRequest readRequest) {
+                        if (readRequest.getVariable() == errorCodes) {
+                            listener.completeReadRequest(
+                                    readRequest, new DataValue(new Variant(errorCodesBuilder.toString())));
+                        } else if (readRequest.getVariable() == errorNames) {
+                            listener.completeReadRequest(
+                                    readRequest, new DataValue(new Variant(errorNamesBuilder.toString())));
+                        } else if (readRequest.getVariable() == errorLevel) {
+                            listener.completeReadRequest(
+                                    readRequest, new DataValue(new Variant(highestErrorLevel.name())));
                         }
                     }
                 }
@@ -117,7 +116,7 @@ public class KeyenceDriver implements DeviceDriver {
         }
     }
 
-    private String execCommand(String command, String ... parameters) throws IOException {
+    private String execCommand(String command, String... parameters) throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(command);
         for (String parameter : parameters) {
@@ -127,15 +126,16 @@ public class KeyenceDriver implements DeviceDriver {
         writer.write(stringBuilder.toString() + "\r");
         writer.flush();
         String result = reader.readLine();
-        if(result.startsWith(command)) {
+        if (result.startsWith(command)) {
             return result.substring(command.length());
-        } else if(result.startsWith("ER")) {
+        } else if (result.startsWith("ER")) {
             var split = result.split(Pattern.quote(","));
             var errorCode = Integer.parseInt(split[2]);
             var error = KeyenceDriverCodes.getErrorResponse(errorCode);
             throw new IOException("Error " + error + " while executing command \"" + command + "\"");
         } else {
-            throw new IOException("Unexpected response from device: \"" + result + "\" for command \"" + command + "\"");
+            throw new IOException(
+                    "Unexpected response from device: \"" + result + "\" for command \"" + command + "\"");
         }
     }
 
@@ -158,8 +158,8 @@ public class KeyenceDriver implements DeviceDriver {
     }
 
     private boolean ensureConnected() {
-        if(socket != null) {
-            if(socket.isConnected()) {
+        if (socket != null) {
+            if (socket.isConnected()) {
                 return true;
             } else {
                 disconnect();
@@ -168,8 +168,10 @@ public class KeyenceDriver implements DeviceDriver {
         try {
             socket = new Socket();
             socket.setSoTimeout(timeout);
-            socket.connect(new InetSocketAddress(device.getOption("hostname"),
-                    Integer.parseInt(device.getOptionOrDefault("port", "9004"))), timeout);
+            socket.connect(
+                    new InetSocketAddress(
+                            device.getOption("hostname"), Integer.parseInt(device.getOptionOrDefault("port", "9004"))),
+                    timeout);
             writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.US_ASCII);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
             return true;
