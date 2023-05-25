@@ -45,3 +45,7 @@ mvn spring-boot:run
 - Spring Boot 3.0
 - Eclipse Milo OPC UA SDK
 - Docker & BuildKit
+
+## Development
+1. Follow the above instructions to run the application with Java.
+2. After making changes, run ``mvn spotless:apply`` to format your code before committing.
