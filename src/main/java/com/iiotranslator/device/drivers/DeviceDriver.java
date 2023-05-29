@@ -4,10 +4,10 @@
  */
 package com.iiotranslator.device.drivers;
 
+import com.iiotranslator.device.Device;
 import com.iiotranslator.device.DeviceRequest;
 import com.iiotranslator.device.DeviceRequestCompletionListener;
 import com.iiotranslator.opc.FolderNode;
-import com.iiotranslator.service.Device;
 import java.util.List;
 
 public interface DeviceDriver {

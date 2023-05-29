@@ -4,10 +4,10 @@
  */
 package com.iiotranslator.device.drivers.other;
 
+import com.iiotranslator.device.Device;
 import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
-import com.iiotranslator.service.Device;
 import java.util.Random;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

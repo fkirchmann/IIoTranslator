@@ -4,13 +4,13 @@
  */
 package com.iiotranslator.device.drivers.binder;
 
+import com.iiotranslator.device.Device;
 import com.iiotranslator.device.DeviceRequest;
 import com.iiotranslator.device.DeviceRequestCompletionListener;
 import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
-import com.iiotranslator.service.Device;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;

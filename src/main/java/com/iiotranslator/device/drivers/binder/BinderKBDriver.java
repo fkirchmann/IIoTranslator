@@ -4,11 +4,11 @@
  */
 package com.iiotranslator.device.drivers.binder;
 
+import com.iiotranslator.device.Device;
 import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.device.drivers.NonBatchingDeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
-import com.iiotranslator.service.Device;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

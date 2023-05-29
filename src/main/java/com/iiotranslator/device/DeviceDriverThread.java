@@ -6,58 +6,65 @@ package com.iiotranslator.device;
 
 import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.opc.FolderNode;
+import com.iiotranslator.opc.OpcVariableNodeAccessor;
 import com.iiotranslator.opc.VariableNode;
-import com.iiotranslator.opc.VariableNodeAccessor;
 import com.iiotranslator.opc.WritableVariableNode;
-import com.iiotranslator.service.Device;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 
 /**
- * Abstract base class for device drivers.
- * <p>
- * Implementations should register their constructor in the
- * {@link com.iiotranslator.device.drivers.KnownDeviceDrivers} class.
+ * This class provides a seperate thread and {@link DeviceDriver} instance for each device, preventing
+ * devices from blocking each other.
  */
 @Slf4j
-public class DeviceDriverThread implements VariableNodeAccessor, DeviceRequestCompletionListener {
-
-    @Getter
+public class DeviceDriverThread implements OpcVariableNodeAccessor {
     private final Device device;
-
+    private DeviceDriver deviceDriver;
     private final FolderNode deviceFolder;
-    private final Thread thread;
-
-    private final Supplier<DeviceDriver> driverSupplier;
     private final Map<DeviceRequest, Set<CompletableFuture<?>>> pendingRequests =
             Collections.synchronizedMap(new LinkedHashMap<>());
+
+    private final DeviceRequestCompletionListener threadRequestCompletionListener =
+            new DeviceRequestCompletionListener() {
+                @Override
+                public void completeReadRequest(DeviceRequest.ReadRequest request, DataValue value) {
+                    DeviceDriverThread.this.completeReadRequest(request, value);
+                }
+
+                @Override
+                public void completeWriteRequest(DeviceRequest.WriteRequest request) {
+                    DeviceDriverThread.this.completeWriteRequest(request);
+                }
+
+                @Override
+                public void completeWriteRequest(DeviceRequest.WriteRequest request, Exception e) {
+                    DeviceDriverThread.this.completeWriteRequest(request, e);
+                }
+            };
 
     DeviceDriverThread(Device device, FolderNode deviceFolder, Supplier<DeviceDriver> driverSupplier) {
         this.device = device;
         this.deviceFolder = deviceFolder;
-        this.driverSupplier = driverSupplier;
-        this.thread = new Thread(this::thread);
+        Thread thread = new Thread(() -> thread(driverSupplier));
         thread.setDaemon(false);
         thread.setName("DeviceDriver \"" + device.getDriver() + "\" for device \"" + device.getName() + "\"");
         thread.start();
     }
 
-    private void thread() {
-        DeviceDriver deviceDriver;
+    private void thread(Supplier<DeviceDriver> driverSupplier) {
         try {
             deviceDriver = driverSupplier.get();
         } catch (Exception e) {
-            log.error("[{}]: Could not instantiate device driver", getDevice().getName(), e);
+            log.error("[{}]: Could not instantiate device driver", device.getName(), e);
             return;
         }
         try {
             deviceDriver.initialize(device, deviceFolder);
         } catch (Exception e) {
-            log.error("[{}]: Error in device driver initialization", getDevice().getName(), e);
+            log.error("[{}]: Error in device driver initialization", device.getName(), e);
             return;
         }
         try {
@@ -70,15 +77,15 @@ public class DeviceDriverThread implements VariableNodeAccessor, DeviceRequestCo
                     }
                 }
                 if (!requests.isEmpty()) {
-                    deviceDriver.process(requests, this);
+                    deviceDriver.process(requests, threadRequestCompletionListener);
                 }
             }
         } catch (Exception e) {
-            log.error("[{}]: Error in device driver loop", getDevice().getName(), e);
+            log.error("[{}]: Error in device driver loop", device.getName(), e);
         }
     }
 
-    public void completeReadRequest(DeviceRequest.ReadRequest request, DataValue value) {
+    private void completeReadRequest(DeviceRequest.ReadRequest request, DataValue value) {
         var futures = pendingRequests.remove(request);
         if (futures != null) {
             futures.forEach(future -> ((CompletableFuture<DataValue>) future).complete(value));
@@ -87,7 +94,7 @@ public class DeviceDriverThread implements VariableNodeAccessor, DeviceRequestCo
         }
     }
 
-    public void completeWriteRequest(DeviceRequest.WriteRequest request) {
+    private void completeWriteRequest(DeviceRequest.WriteRequest request) {
         var futures = pendingRequests.remove(request);
         if (futures != null) {
             futures.forEach(future -> future.complete(null));
@@ -96,7 +103,7 @@ public class DeviceDriverThread implements VariableNodeAccessor, DeviceRequestCo
         }
     }
 
-    public void completeWriteRequest(DeviceRequest.WriteRequest request, Exception e) {
+    private void completeWriteRequest(DeviceRequest.WriteRequest request, Exception e) {
         var futures = pendingRequests.remove(request);
         if (futures != null) {
             futures.forEach(future -> future.completeExceptionally(e));

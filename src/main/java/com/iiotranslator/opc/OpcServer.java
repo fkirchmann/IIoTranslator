@@ -4,12 +4,6 @@
  */
 package com.iiotranslator.opc;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,6 +22,13 @@ import org.eclipse.milo.opcua.stack.core.types.enumerated.UserTokenType;
 import org.eclipse.milo.opcua.stack.core.types.structured.BuildInfo;
 import org.eclipse.milo.opcua.stack.core.types.structured.UserTokenPolicy;
 import org.eclipse.milo.opcua.stack.server.EndpointConfiguration;
+
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import static com.google.common.collect.Lists.newArrayList;
 
 public class OpcServer {
     private static final String PRODUCT_URI = "urn:com:iiotranslator",
@@ -51,7 +52,7 @@ public class OpcServer {
     @Getter
     @Setter
     @NonNull
-    private VariableNodeAccessor variableNodeAccessor = new VariableNodeAccessor() {
+    private OpcVariableNodeAccessor variableNodeAccessor = new OpcVariableNodeAccessor() {
         /*
          * This is a dummy implementation
          */

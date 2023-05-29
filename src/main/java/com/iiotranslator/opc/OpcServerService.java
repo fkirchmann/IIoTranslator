@@ -2,9 +2,8 @@
  * Copyright (c) 2022-2023 Felix Kirchmann.
  * Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
  */
-package com.iiotranslator.service;
+package com.iiotranslator.opc;
 
-import com.iiotranslator.opc.OpcServer;
 import jakarta.annotation.PostConstruct;
 import java.util.Set;
 import lombok.Getter;
@@ -13,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * This class is responsible for starting the OPC UA server, using the configuration provided by Spring Boot.
+ */
 @Service
 @Slf4j
 public class OpcServerService {

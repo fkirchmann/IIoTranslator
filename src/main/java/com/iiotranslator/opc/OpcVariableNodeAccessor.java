@@ -4,11 +4,12 @@
  */
 package com.iiotranslator.opc;
 
-import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 
-public interface VariableNodeAccessor {
+import java.util.concurrent.CompletableFuture;
+
+public interface OpcVariableNodeAccessor {
     CompletableFuture<DataValue> read(VariableNode variable);
 
     @SneakyThrows

@@ -6,14 +6,12 @@ package com.iiotranslator.device;
 
 import com.iiotranslator.device.drivers.KnownDeviceDrivers;
 import com.iiotranslator.opc.*;
-import com.iiotranslator.service.DevicesConfiguration;
-import com.iiotranslator.service.OpcServerService;
+import com.iiotranslator.opc.OpcServerService;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,14 +19,14 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.springframework.stereotype.Service;
 
 /**
- * Manages Device Drivers and distributes requests to them.
+ * Manages Device Drivers and distributes requests to them. Also creates an OPC UA folder for each device, and provides
+ * that to its driver so that it can create its own nodes.
  */
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DevicesService implements VariableNodeAccessor {
-    @Getter
-    private final OpcServerService opcServerService;
+public class DevicesService implements OpcVariableNodeAccessor {
+    private final OpcServerService opcServer;
 
     private final DevicesConfiguration config;
 
@@ -37,7 +35,7 @@ public class DevicesService implements VariableNodeAccessor {
     @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @PostConstruct
     private void initialize() {
-        var rootNode = opcServerService.getServer().getRootNode().get();
+        var rootNode = opcServer.getServer().getRootNode().get();
         log.info("Starting device driver threads");
         config.getDevices().parallelStream().forEach(device -> {
             log.info("[{}]: Initializing device", device.getName());
@@ -52,7 +50,7 @@ public class DevicesService implements VariableNodeAccessor {
             }
         });
         log.info("All device driver threads started");
-        opcServerService.getServer().setVariableNodeAccessor(this);
+        opcServer.getServer().setVariableNodeAccessor(this);
     }
 
     @Override

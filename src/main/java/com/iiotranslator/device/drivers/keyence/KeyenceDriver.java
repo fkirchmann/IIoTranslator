@@ -4,12 +4,12 @@
  */
 package com.iiotranslator.device.drivers.keyence;
 
+import com.iiotranslator.device.Device;
 import com.iiotranslator.device.DeviceRequest;
 import com.iiotranslator.device.DeviceRequestCompletionListener;
 import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
-import com.iiotranslator.service.Device;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

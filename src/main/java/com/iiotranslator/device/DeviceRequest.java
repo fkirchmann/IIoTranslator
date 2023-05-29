@@ -5,6 +5,7 @@
 package com.iiotranslator.device;
 
 import com.iiotranslator.opc.VariableNode;
+import com.iiotranslator.opc.WritableVariableNode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class DeviceRequest {
     @RequiredArgsConstructor
     @Getter
     public static class WriteRequest extends DeviceRequest {
-        private final VariableNode variable;
+        private final WritableVariableNode variable;
         private final Object value;
     }
 }

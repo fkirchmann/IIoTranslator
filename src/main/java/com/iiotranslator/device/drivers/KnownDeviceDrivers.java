@@ -4,12 +4,12 @@
  */
 package com.iiotranslator.device.drivers;
 
+import com.iiotranslator.device.Device;
 import com.iiotranslator.device.drivers.binder.BinderKBDriver;
 import com.iiotranslator.device.drivers.binder.BinderKBFDriver;
 import com.iiotranslator.device.drivers.other.IPSwitchDriver;
 import com.iiotranslator.device.drivers.other.TestDriver;
 import com.iiotranslator.device.drivers.weiss.WeissLabEventDriver;
-import com.iiotranslator.service.Device;
 import java.util.function.Supplier;
 
 public class KnownDeviceDrivers {

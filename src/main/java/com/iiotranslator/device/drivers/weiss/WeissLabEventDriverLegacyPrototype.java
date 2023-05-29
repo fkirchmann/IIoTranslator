@@ -6,13 +6,13 @@ package com.iiotranslator.device.drivers.weiss;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.iiotranslator.device.Device;
 import com.iiotranslator.device.DeviceRequest;
 import com.iiotranslator.device.DeviceRequestCompletionListener;
 import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.device.drivers.DriverUtil;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
-import com.iiotranslator.service.Device;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;

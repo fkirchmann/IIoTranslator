@@ -4,7 +4,7 @@
  */
 package com.iiotranslator;
 
-import com.iiotranslator.service.DevicesConfiguration;
+import com.iiotranslator.device.DevicesConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
