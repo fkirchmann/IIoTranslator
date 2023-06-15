@@ -96,7 +96,7 @@ public class OpcNamespace extends ManagedNamespaceWithLifecycle {
                     });
                     return variableValues.getOrDefault(variableNode, defaultValue);
                 } else if (attributeId == AttributeId.DataType) {
-                    // As this method is called from the super(..) call in VariableNode's constructur, the variableNode
+                    // As this method is called from the super(..) call in VariableNode's constructor, the variableNode
                     // .getDataType() method returns null, as the dataType is not yet set.
                     // Therefore, the dataType is retrieved at runtime when it is requested by an OPC client.
                     return variableNode.getDataType();
