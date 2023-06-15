@@ -4,11 +4,6 @@
  */
 package com.iiotranslator.opc;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Synchronized;
@@ -28,8 +23,13 @@ import org.eclipse.milo.opcua.sdk.server.util.SubscriptionModel;
 import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.StatusCodes;
-import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
-import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
+import org.eclipse.milo.opcua.stack.core.types.builtin.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class OpcNamespace extends ManagedNamespaceWithLifecycle {
@@ -78,7 +78,8 @@ public class OpcNamespace extends ManagedNamespaceWithLifecycle {
         var writeLock = new Object();
         AtomicBoolean isWritingReadValue = new AtomicBoolean(false);
 
-        var defaultValue = new DataValue(StatusCodes.Bad_WaitingForInitialData);
+        var defaultValue = new DataValue(
+                Variant.NULL_VALUE, new StatusCode(StatusCodes.Bad_WaitingForInitialData), DateTime.now());
         uaVariableNode.setValue(defaultValue);
 
         uaVariableNode.getFilterChain().addFirst(new AttributeFilter() {
@@ -94,6 +95,11 @@ public class OpcNamespace extends ManagedNamespaceWithLifecycle {
                         }
                     });
                     return variableValues.getOrDefault(variableNode, defaultValue);
+                } else if (attributeId == AttributeId.DataType) {
+                    // As this method is called from the super(..) call in VariableNode's constructur, the variableNode
+                    // .getDataType() method returns null, as the dataType is not yet set.
+                    // Therefore, the dataType is retrieved at runtime when it is requested by an OPC client.
+                    return variableNode.getDataType();
                 }
                 return ctx.getAttribute(attributeId);
             }
