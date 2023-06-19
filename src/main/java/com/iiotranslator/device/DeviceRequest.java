@@ -9,6 +9,7 @@ import com.iiotranslator.opc.WritableVariableNode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 
 public class DeviceRequest {
     @EqualsAndHashCode(callSuper = false)
@@ -23,6 +24,6 @@ public class DeviceRequest {
     @Getter
     public static class WriteRequest extends DeviceRequest {
         private final WritableVariableNode variable;
-        private final Object value;
+        private final DataValue value;
     }
 }

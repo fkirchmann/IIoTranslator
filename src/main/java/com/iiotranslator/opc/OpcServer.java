@@ -61,7 +61,7 @@ public class OpcServer {
         }
 
         @Override
-        public CompletableFuture<Void> write(WritableVariableNode variable, Object value) {
+        public CompletableFuture<Void> write(WritableVariableNode variable, DataValue value) {
             var future = new CompletableFuture<Void>();
             future.completeExceptionally(new UnsupportedOperationException());
             return future;

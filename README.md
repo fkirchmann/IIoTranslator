@@ -9,10 +9,10 @@ IIoTranslator establishes connections with industrial equipment and makes their 
   - Binder KB: older generation, has a rotating knob
   - Binder KBF: Newer generation, has a touch screen
 - [IPswitch](docs/drivers/IPswitch.md) tested with IPswitch-S0m-Wifi
-- Keyence MK-U6000 inkjet printer: in progress
+- [Keyence MK-U](docs/drivers/KeyenceMKU.md): supports Keyence MK-U6000/MK-U2000 series industrial ink-jet printers.
 - Inficon ELT3000: coming soon
 
-Note: a device driver being mentioned in this project does not imply any sort of support, warranty or endorsement by me, my employer or the device manufacturer. Use at your own risk.
+Note: a device driver being mentioned in this project does not imply any sort of support, warranty or endorsement by me, my current or any previous employer or the device manufacturer. Use at your own risk.
 
 ## Running the Application
 ### Quick Start with Docker (recommended)

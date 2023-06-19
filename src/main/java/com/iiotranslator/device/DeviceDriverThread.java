@@ -30,17 +30,17 @@ public class DeviceDriverThread implements OpcVariableNodeAccessor {
     private final DeviceRequestCompletionListener threadRequestCompletionListener =
             new DeviceRequestCompletionListener() {
                 @Override
-                public void completeReadRequest(DeviceRequest.ReadRequest request, DataValue value) {
+                public void completeReadRequestExceptionally(DeviceRequest.ReadRequest request, DataValue value) {
                     DeviceDriverThread.this.completeReadRequest(request, value);
                 }
 
                 @Override
-                public void completeWriteRequest(DeviceRequest.WriteRequest request) {
+                public void completeWriteRequestExceptionally(DeviceRequest.WriteRequest request) {
                     DeviceDriverThread.this.completeWriteRequest(request);
                 }
 
                 @Override
-                public void completeWriteRequest(DeviceRequest.WriteRequest request, Exception e) {
+                public void completeWriteRequestExceptionally(DeviceRequest.WriteRequest request, Exception e) {
                     DeviceDriverThread.this.completeWriteRequest(request, e);
                 }
             };
@@ -123,7 +123,7 @@ public class DeviceDriverThread implements OpcVariableNodeAccessor {
         return future;
     }
 
-    public CompletableFuture<Void> write(WritableVariableNode variable, Object value) {
+    public CompletableFuture<Void> write(WritableVariableNode variable, DataValue value) {
         var future = new CompletableFuture<Void>();
         synchronized (pendingRequests) {
             pendingRequests

@@ -4,6 +4,11 @@
  */
 package com.iiotranslator.opc;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Synchronized;
@@ -24,12 +29,6 @@ import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.types.builtin.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class OpcNamespace extends ManagedNamespaceWithLifecycle {
@@ -69,6 +68,7 @@ public class OpcNamespace extends ManagedNamespaceWithLifecycle {
         var uaVariableNode = new UaVariableNode.UaVariableNodeBuilder(getNodeContext())
                 .setNodeId(newNodeId(variableNode.getPathString()))
                 .setAccessLevel(variableNode.isWritable() ? AccessLevel.READ_WRITE : AccessLevel.READ_ONLY)
+                .setUserAccessLevel(variableNode.isWritable() ? AccessLevel.READ_WRITE : AccessLevel.READ_ONLY)
                 .setBrowseName(newQualifiedName(variableNode.getName()))
                 .setDisplayName(LocalizedText.english(variableNode.getName()))
                 .setDataType(variableNode.getDataType())
@@ -104,7 +104,7 @@ public class OpcNamespace extends ManagedNamespaceWithLifecycle {
                 return ctx.getAttribute(attributeId);
             }
         });
-        uaVariableNode.getFilterChain().addLast(AttributeFilters.setValue((ctx, value) -> {
+        uaVariableNode.getFilterChain().addFirst(AttributeFilters.setValue((ctx, value) -> {
             synchronized (writeLock) {
                 if (isWritingReadValue.get()) {
                     return;

@@ -16,10 +16,10 @@ public interface OpcVariableNodeAccessor {
         return read(variable).get();
     }
 
-    CompletableFuture<Void> write(WritableVariableNode variable, Object value);
+    CompletableFuture<Void> write(WritableVariableNode variable, DataValue value);
 
     @SneakyThrows
-    default void writeSync(WritableVariableNode variable, Object value) {
+    default void writeSync(WritableVariableNode variable, DataValue value) {
         write(variable, value).get();
     }
 }

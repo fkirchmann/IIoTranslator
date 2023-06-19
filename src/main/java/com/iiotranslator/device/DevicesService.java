@@ -6,7 +6,6 @@ package com.iiotranslator.device;
 
 import com.iiotranslator.device.drivers.KnownDeviceDrivers;
 import com.iiotranslator.opc.*;
-import com.iiotranslator.opc.OpcServerService;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -59,7 +58,7 @@ public class DevicesService implements OpcVariableNodeAccessor {
     }
 
     @Override
-    public CompletableFuture<Void> write(WritableVariableNode variable, Object value) {
+    public CompletableFuture<Void> write(WritableVariableNode variable, DataValue value) {
         return getDriver(variable).write(variable, value);
     }
 
