@@ -37,7 +37,7 @@ public class DevicesService implements OpcVariableNodeAccessor {
         var rootNode = opcServer.getServer().getRootNode().get();
         log.info("Starting device driver threads");
         config.getDevices().parallelStream().forEach(device -> {
-            log.info("[{}]: Initializing device", device.getName());
+            log.debug("[{}]: Initializing device", device.getName());
             var deviceFolder = rootNode.addFolder(device.getName());
             try {
                 var driverSupplier = KnownDeviceDrivers.getDriverSupplier(device);
