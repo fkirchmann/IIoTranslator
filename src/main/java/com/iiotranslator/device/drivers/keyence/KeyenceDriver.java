@@ -120,7 +120,7 @@ public class KeyenceDriver implements DeviceDriver {
                 variableValues.put(errorNames, new DataValue(new Variant(errorNamesBuilder.toString())));
                 variableValues.put(errorLevel, new DataValue(new Variant(highestErrorLevel.name())));
             } catch (IOException e) {
-                log.warn("[{}]: Error reading error codes", device.getName(), e);
+                log.debug("[{}]: Error reading error codes", device.getName(), e);
                 variableValues.put(errorLevel, new DataValue(StatusCodes.Bad_InternalError));
                 variableValues.put(errorCodes, new DataValue(StatusCodes.Bad_InternalError));
                 variableValues.put(errorNames, new DataValue(StatusCodes.Bad_InternalError));
@@ -136,7 +136,7 @@ public class KeyenceDriver implements DeviceDriver {
                 variableValues.put(systemStatusCode, new DataValue(new Variant(systemStatusCodeValue)));
                 variableValues.put(systemStatusNames, new DataValue(new Variant(systemStatusName.getName())));
             } catch (IOException e) {
-                log.warn("[{}]: Error reading system status", device.getName(), e);
+                log.debug("[{}]: Error reading system status", device.getName(), e);
                 variableValues.put(systemStatusCode, new DataValue(StatusCodes.Bad_InternalError));
                 variableValues.put(systemStatusNames, new DataValue(StatusCodes.Bad_InternalError));
             }
@@ -168,12 +168,12 @@ public class KeyenceDriver implements DeviceDriver {
                         variableValues.put(lineSpeed, new DataValue(new Variant(lineSpeedValueToWrite)));
                         listener.completeWriteRequestExceptionally(writeRequest);
                     } catch (IOException e) {
-                        log.warn("[{}]: Error writing line speed", device.getName(), e);
+                        log.debug("[{}]: Error writing line speed", device.getName(), e);
                         listener.completeWriteRequestExceptionally(writeRequest, e);
                     }
                 }
             } catch (IOException e) {
-                log.warn("[{}]: Error reading line speed", device.getName(), e);
+                log.debug("[{}]: Error reading line speed", device.getName(), e);
                 variableValues.put(lineSpeed, new DataValue(StatusCodes.Bad_InternalError));
             }
         }
@@ -189,7 +189,7 @@ public class KeyenceDriver implements DeviceDriver {
                         + timeSplit[4] + ":" + timeSplit[5] + ":" + timeSplit[6];
                 variableValues.put(time, new DataValue(new Variant(timeStringISO6801)));
             } catch (IOException e) {
-                log.warn("[{}]: Error reading time", device.getName(), e);
+                log.debug("[{}]: Error reading time", device.getName(), e);
                 variableValues.put(time, new DataValue(StatusCodes.Bad_InternalError));
             }
         }
@@ -212,7 +212,7 @@ public class KeyenceDriver implements DeviceDriver {
                     variableValues.put(lastPrinted, new DataValue(new Variant(lastPrintedSplit[3])));
                 }
             } catch (IOException | NumberFormatException e) {
-                log.warn("[{}]: Error reading current program", device.getName(), e);
+                log.debug("[{}]: Error reading current program", device.getName(), e);
                 variableValues.put(currentProgram, new DataValue(StatusCodes.Bad_InternalError));
             }
         }
@@ -239,7 +239,9 @@ public class KeyenceDriver implements DeviceDriver {
         writer.flush();
         String result = reader.readLine();
         log.trace("[{}]: Received response \"{}\"", device.getName(), result);
-        if (result.startsWith(command)) {
+        if (result == null) {
+            throw new IOException("Unexpected end of stream");
+        } else if (result.startsWith(command)) {
             return result.substring(command.length());
         } else if (result.startsWith("ER")) {
             var split = result.split(Pattern.quote(","), -1);
