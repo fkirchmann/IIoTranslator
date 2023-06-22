@@ -8,10 +8,10 @@ import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 
 public interface DeviceRequestCompletionListener {
-    void completeReadRequestExceptionally(DeviceRequest.ReadRequest request, DataValue value);
+    void completeReadRequest(DeviceRequest.ReadRequest request, DataValue value);
 
     default void completeReadRequestExceptionally(DeviceRequest.ReadRequest request, Exception e) {
-        completeReadRequestExceptionally(request, new DataValue(StatusCodes.Bad_InternalError));
+        completeReadRequest(request, new DataValue(StatusCodes.Bad_InternalError));
     }
 
     void completeWriteRequestExceptionally(DeviceRequest.WriteRequest request);

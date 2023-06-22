@@ -116,7 +116,7 @@ public class BinderKBFDriver implements DeviceDriver {
             for (DeviceRequest request : requestQueue) {
                 var readRequest = (DeviceRequest.ReadRequest) request;
                 var variable = readRequest.getVariable();
-                listener.completeReadRequestExceptionally(
+                listener.completeReadRequest(
                         readRequest, variableValues.getOrDefault(variable, new DataValue(StatusCode.BAD)));
             }
         }

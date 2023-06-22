@@ -41,7 +41,7 @@ public interface NonBatchingDeviceDriver extends DeviceDriver {
     default void process(List<DeviceRequest> requestQueue, DeviceRequestCompletionListener listener) {
         for (DeviceRequest request : requestQueue) {
             if (request instanceof DeviceRequest.ReadRequest readRequest) {
-                listener.completeReadRequestExceptionally(readRequest, read(readRequest.getVariable()));
+                listener.completeReadRequest(readRequest, read(readRequest.getVariable()));
             } else if (request instanceof DeviceRequest.WriteRequest writeRequest) {
                 write(writeRequest.getVariable(), writeRequest.getValue());
                 listener.completeWriteRequestExceptionally(writeRequest);

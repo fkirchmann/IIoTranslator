@@ -30,7 +30,7 @@ public class DeviceDriverThread implements OpcVariableNodeAccessor {
     private final DeviceRequestCompletionListener threadRequestCompletionListener =
             new DeviceRequestCompletionListener() {
                 @Override
-                public void completeReadRequestExceptionally(DeviceRequest.ReadRequest request, DataValue value) {
+                public void completeReadRequest(DeviceRequest.ReadRequest request, DataValue value) {
                     DeviceDriverThread.this.completeReadRequest(request, value);
                 }
 

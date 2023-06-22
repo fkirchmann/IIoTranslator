@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
+import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 
 /*
@@ -83,8 +84,7 @@ public class KeyenceDriver implements DeviceDriver {
         if (!ensureConnected()) {
             for (DeviceRequest request : requestQueue) {
                 if (request instanceof DeviceRequest.ReadRequest readRequest) {
-                    listener.completeReadRequestExceptionally(
-                            readRequest, new DataValue(StatusCodes.Bad_NoCommunication));
+                    listener.completeReadRequest(readRequest, new DataValue(StatusCodes.Bad_NoCommunication));
                 } else if (request instanceof DeviceRequest.WriteRequest writeRequest) {
                     listener.completeWriteRequestExceptionally(writeRequest, new IOException("Not connected"));
                 }
@@ -221,9 +221,11 @@ public class KeyenceDriver implements DeviceDriver {
                 .filter(request -> request instanceof DeviceRequest.ReadRequest)
                 .forEach(request -> {
                     var value = variableValues.get(((DeviceRequest.ReadRequest) request).getVariable());
-                    listener.completeReadRequestExceptionally(
+                    listener.completeReadRequest(
                             (DeviceRequest.ReadRequest) request,
-                            Objects.requireNonNullElseGet(value, () -> new DataValue(StatusCodes.Bad_NoData)));
+                            Objects.requireNonNullElseGet(
+                                    value,
+                                    () -> new DataValue(Variant.NULL_VALUE, new StatusCode(StatusCodes.Bad_NoData))));
                 });
     }
 
