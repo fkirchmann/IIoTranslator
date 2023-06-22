@@ -214,6 +214,7 @@ public class KeyenceDriver implements DeviceDriver {
             } catch (IOException | NumberFormatException e) {
                 log.debug("[{}]: Error reading current program", device.getName(), e);
                 variableValues.put(currentProgram, new DataValue(StatusCodes.Bad_InternalError));
+                variableValues.put(lastPrinted, new DataValue(StatusCodes.Bad_InternalError));
             }
         }
         // Answer read requests with variableValues
@@ -276,7 +277,7 @@ public class KeyenceDriver implements DeviceDriver {
 
     private boolean ensureConnected() {
         if (socket != null) {
-            if (socket.isConnected()) {
+            if (socket.isConnected() && !socket.isClosed()) {
                 return true;
             } else {
                 disconnect();
