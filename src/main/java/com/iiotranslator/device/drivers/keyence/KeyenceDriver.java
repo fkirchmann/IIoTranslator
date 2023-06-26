@@ -243,6 +243,7 @@ public class KeyenceDriver implements DeviceDriver {
         String result = reader.readLine();
         log.trace("[{}]: Received response \"{}\"", device.getName(), result);
         if (result == null) {
+            disconnect();
             throw new IOException("Unexpected end of stream");
         } else if (result.startsWith(command)) {
             return result.substring(command.length());
