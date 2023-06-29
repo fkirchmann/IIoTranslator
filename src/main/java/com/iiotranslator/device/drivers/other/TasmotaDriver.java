@@ -40,8 +40,8 @@ public class TasmotaDriver implements DeviceDriver {
             totalStartTime,
             energy_Wh,
             power_W,
-            apparentPower_W,
-            reactivePower_W,
+            apparentPower_VA,
+            reactivePower_VAr,
             powerFactor,
             voltage_V,
             current_A;
@@ -64,8 +64,8 @@ public class TasmotaDriver implements DeviceDriver {
         totalStartTime = deviceFolderNode.addVariableReadOnly("Energy Measurement Start Time", Identifiers.String);
         energy_Wh = deviceFolderNode.addVariableReadOnly("Energy (Wh)", Identifiers.Double);
         power_W = deviceFolderNode.addVariableReadOnly("Power (W)", Identifiers.Int64);
-        apparentPower_W = deviceFolderNode.addVariableReadOnly("Apparent Power (W)", Identifiers.Int64);
-        reactivePower_W = deviceFolderNode.addVariableReadOnly("Reactive Power (W)", Identifiers.Int64);
+        apparentPower_VA = deviceFolderNode.addVariableReadOnly("Apparent Power (VA)", Identifiers.Int64);
+        reactivePower_VAr = deviceFolderNode.addVariableReadOnly("Reactive Power (VAr)", Identifiers.Int64);
         powerFactor = deviceFolderNode.addVariableReadOnly("Power Factor", Identifiers.Double);
         voltage_V = deviceFolderNode.addVariableReadOnly("Voltage (V)", Identifiers.Int64);
         current_A = deviceFolderNode.addVariableReadOnly("Current (A)", Identifiers.Double);
@@ -92,8 +92,8 @@ public class TasmotaDriver implements DeviceDriver {
             variableValues.put(totalStartTime, new DataValue(new Variant(energy.getTotalStartTime())));
             variableValues.put(energy_Wh, new DataValue(new Variant(energy.getTotal() * 1000.0)));
             variableValues.put(power_W, new DataValue(new Variant(energy.getPower())));
-            variableValues.put(apparentPower_W, new DataValue(new Variant(energy.getApparentPower())));
-            variableValues.put(reactivePower_W, new DataValue(new Variant(energy.getReactivePower())));
+            variableValues.put(apparentPower_VA, new DataValue(new Variant(energy.getApparentPower())));
+            variableValues.put(reactivePower_VAr, new DataValue(new Variant(energy.getReactivePower())));
             variableValues.put(powerFactor, new DataValue(new Variant(energy.getFactor())));
             variableValues.put(voltage_V, new DataValue(new Variant(energy.getVoltage())));
             variableValues.put(current_A, new DataValue(new Variant(energy.getCurrent())));
