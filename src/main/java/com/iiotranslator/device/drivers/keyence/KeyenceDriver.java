@@ -240,7 +240,13 @@ public class KeyenceDriver implements DeviceDriver {
         log.trace("[{}]: Executing command \"{}\"", device.getName(), stringBuilder);
         writer.write(stringBuilder + "\r");
         writer.flush();
-        String result = reader.readLine();
+        String result = null;
+        try {
+            result = reader.readLine();
+        } catch (IOException e) {
+            disconnect();
+            throw e;
+        }
         log.trace("[{}]: Received response \"{}\"", device.getName(), result);
         if (result == null) {
             disconnect();
