@@ -10,6 +10,7 @@ IIoTranslator establishes connections with industrial equipment and makes their 
   - Binder KBF: Newer generation, has a touch screen
 - [IPswitch](docs/drivers/IPswitch.md) tested with IPswitch-S0m-Wifi
 - [Keyence MK-U](docs/drivers/KeyenceMKU.md): supports Keyence MK-U6000/MK-U2000 series industrial ink-jet printers.
+- [Tasmota](docs/drivers/Tasmota.md): supports Tasmota devices with an energy meter.
 - Inficon ELT3000: coming soon
 
 Note: a device driver being mentioned in this project does not imply any sort of support, warranty or endorsement by me, my current or any previous employer or the device manufacturer. Use at your own risk.

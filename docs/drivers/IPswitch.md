@@ -4,8 +4,8 @@ Supports [IPswitch](https://www.sms-guard.org/shop.php) devices, tested with an 
 iiot.devices.smartmeter1.driver=ipswitch
 iiot.devices.smartmeter1.hostname=10.1.2.3
 
-# Default timeout is 2000ms, but can be changed here
-#iiot.devices.oven1.timeout=2000
+# Default timeout is 8000ms, but can be changed here
+#iiot.devices.smartmeter1.timeout=8000
 ```
 
 ### EEPROM Backup
