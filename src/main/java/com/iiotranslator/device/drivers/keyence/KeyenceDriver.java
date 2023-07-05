@@ -11,6 +11,13 @@ import com.iiotranslator.device.drivers.DeviceDriver;
 import com.iiotranslator.opc.FolderNode;
 import com.iiotranslator.opc.VariableNode;
 import com.iiotranslator.opc.WritableVariableNode;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.milo.opcua.stack.core.Identifiers;
+import org.eclipse.milo.opcua.stack.core.StatusCodes;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
+import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
+import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,12 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.milo.opcua.stack.core.Identifiers;
-import org.eclipse.milo.opcua.stack.core.StatusCodes;
-import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
-import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
-import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 
 /*
  * This driver supports Keyence's MK-U6000/MK-U2000 industrial ink-jet printer.
@@ -108,13 +109,17 @@ public class KeyenceDriver implements DeviceDriver {
                 KeyenceDriverCodes.ErrorLevel highestErrorLevel = KeyenceDriverCodes.ErrorLevel.OK;
                 StringBuilder errorCodesBuilder = new StringBuilder(), errorNamesBuilder = new StringBuilder();
                 for (int i = 1; i < errorCodesSplit.length; i++) {
+                    if (i > 1) {
+                        errorCodesBuilder.append(",");
+                        errorNamesBuilder.append(",");
+                    }
                     var errorCode = Integer.parseInt(errorCodesSplit[i]);
                     var error = KeyenceDriverCodes.getSystemErrorCode(errorCode);
                     if (error.getLevel().compareTo(highestErrorLevel) > 0) {
                         highestErrorLevel = error.getLevel();
                     }
-                    errorCodesBuilder.append(errorCode).append(",");
-                    errorNamesBuilder.append(error.getName()).append(",");
+                    errorCodesBuilder.append(errorCode);
+                    errorNamesBuilder.append(error.getName());
                 }
                 variableValues.put(errorCodes, new DataValue(new Variant(errorCodesBuilder.toString())));
                 variableValues.put(errorNames, new DataValue(new Variant(errorNamesBuilder.toString())));
