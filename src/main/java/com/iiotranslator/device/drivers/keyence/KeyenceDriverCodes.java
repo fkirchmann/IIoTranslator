@@ -90,16 +90,17 @@ public class KeyenceDriverCodes {
     }
 
     public static SystemStatusCodes getSystemStatusCode(int code) {
-        return SYSTEM_STATUS_CODES.get(code);
+        return SYSTEM_STATUS_CODES.getOrDefault(code, SystemStatusCodes.UNKNOWN);
     }
 
     public static SystemErrorCodes getSystemErrorCode(int code) {
-        return SYSTEM_ERROR_CODES.get(code);
+        return SYSTEM_ERROR_CODES.getOrDefault(code, SystemErrorCodes.UNKNOWN);
     }
 
     @RequiredArgsConstructor
     @Getter
     public enum SystemStatusCodes {
+        UNKNOWN(-1, "Unknown"),
         STOPPED(0, "Stopped"),
         PRINTABLE(1, "Printable"),
         STARTUP_COMPLETE_1(2, "Startup complete 1"),
@@ -174,6 +175,7 @@ public class KeyenceDriverCodes {
     @RequiredArgsConstructor
     @Getter
     public enum SystemErrorCodes {
+        UNKNOWN(-1, ErrorLevel.ABNORMAL, "Unknown"),
         MAIN_TANK_EMPTY_ERROR(1, ErrorLevel.ABNORMAL, "Main Tank Empty Error"),
         MAIN_TANK_FULL_ERROR(2, ErrorLevel.ABNORMAL, "Main Tank Full Error"),
         CONDITIONING_TANK_FULL_ERROR(3, ErrorLevel.ABNORMAL, "Conditioning Tank Full Error"),
