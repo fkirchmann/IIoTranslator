@@ -9,6 +9,7 @@ import com.iiotranslator.device.drivers.binder.BinderKBDriver;
 import com.iiotranslator.device.drivers.binder.BinderKBFDriver;
 import com.iiotranslator.device.drivers.keyence.KeyenceDriver;
 import com.iiotranslator.device.drivers.other.IPSwitchDriver;
+import com.iiotranslator.device.drivers.other.InficonELTDriver;
 import com.iiotranslator.device.drivers.other.TasmotaDriver;
 import com.iiotranslator.device.drivers.other.TestDriver;
 import com.iiotranslator.device.drivers.weiss.WeissLabEventDriver;
@@ -31,6 +32,7 @@ public class KnownDeviceDrivers {
             case "weiss_labevent" -> WeissLabEventDriver::new;
             case "keyence_mku" -> KeyenceDriver::new;
             case "tasmota" -> TasmotaDriver::new;
+            case "inficon_elt" -> InficonELTDriver::new;
                 // ------------------------------------------------------------------------------------------
             default -> throw new UnknownDriverException("Unknown device driver: " + device.getDriver());
         };

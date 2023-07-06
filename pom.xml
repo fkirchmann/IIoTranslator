@@ -66,6 +66,12 @@
             <artifactId>Java-WebSocket</artifactId>
             <version>1.5.3</version>
         </dependency>
+        <!-- Required for the InficonELT driver -->
+        <dependency>
+            <groupId>io.socket</groupId>
+            <artifactId>socket.io-client</artifactId>
+            <version>1.0.2</version> <!-- Do not upgrade this, as the 2.x client only support >=3.x protocol -->
+        </dependency>
     </dependencies>
 
     <build>
