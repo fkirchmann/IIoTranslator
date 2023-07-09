@@ -274,7 +274,9 @@ public class KeyenceDriver implements DeviceDriver {
 
     private void disconnect() {
         try {
-            socket.close();
+            if(socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             log.trace("[{}]: Error closing socket", device.getName(), e);
         }
